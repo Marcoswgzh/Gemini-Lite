@@ -1,24 +1,13 @@
 package gemini_lite;
 
-import java.io.OutputStream;
+import java.io.BufferedReader;
+import java.io.BufferedWriter;
+import java.io.InputStreamReader;
+import java.io.OutputStreamWriter;
 import java.net.Socket;
 
-import protocol.Request;
-
 public class Client {
-     public static void main(String[] args) {
-        try {
-            Socket socket = new Socket("demo.svc.leastfixedpoint.nl", 1958);
-            OutputStream out = socket.getOutputStream();
+    public static void main(String[] args) {
 
-            Request request = new Request("gemini-lite://demo.svc.leastfixedpoint.nl");
-
-            request.writeTo(out);
-
-            socket.close();
-        } 
-        catch (Exception e) {
-            e.printStackTrace();
-        }
     }
 }
