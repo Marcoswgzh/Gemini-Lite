@@ -1,5 +1,6 @@
 package engines;
 
+import java.io.Console;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
@@ -10,7 +11,7 @@ import protocol.Reply;
 import protocol.Request;
 
 public class ClientEngine {
-        public static void run(String url, String inputArg) throws IOException, ProtocolSyntaxException {
+    public static void run(String url, String inputArg) throws IOException, ProtocolSyntaxException {
         String currentUrl = url;
         String userInput = null;
         
@@ -120,7 +121,7 @@ public class ClientEngine {
     }
 
     private static String promptUser(String prompt) {
-        java.io.Console console = System.console();
+        Console console = System.console();
         if (console == null) {
             System.err.println("No console available for input.");
             System.exit(1);
