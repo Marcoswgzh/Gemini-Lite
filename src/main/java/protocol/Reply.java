@@ -7,9 +7,9 @@ import java.io.OutputStream;
 import java.nio.charset.StandardCharsets;
 
 public class Reply {
-    private int statusCode;
-    private String meta;
-    private byte[] body;
+    public int statusCode;
+    public String meta;
+    public byte[] body;
 
     public Reply(int statusCode, String meta, byte[] body) {
         this.statusCode = statusCode;
@@ -47,7 +47,7 @@ public class Reply {
 
     private static String readLineCRLF(InputStream in) throws IOException, ProtocolSyntaxException {
         ByteArrayOutputStream buf = new ByteArrayOutputStream();
-        int b = -1;
+        int b;
         boolean CRFound = false;
         while ((b = in.read()) != -1) {
             if (CRFound && b == '\n') {
@@ -56,16 +56,18 @@ public class Reply {
             if (b == '\r') {
                 CRFound = true;
             }
-
             if (!CRFound && b != '\n') {
                 buf.write(b);
             } 
         }
+
         if (!CRFound) {
             throw new ProtocolSyntaxException("Error: CRLF was not found");
         }
+
         return buf.toString(StandardCharsets.UTF_8);
-    }    
+    }
+       
     public void format(OutputStream out) throws IOException {
         String header = String.format("%d %s\r\n", statusCode, meta);
         out.write(header.getBytes(StandardCharsets.UTF_8));

@@ -7,7 +7,7 @@ import java.io.OutputStream;
 import java.nio.charset.StandardCharsets;
 
 public class Request {
-    private String url;
+    public String url;
     private String input;
 
     public Request(String url, String input) {
@@ -23,22 +23,23 @@ public class Request {
         String line = readLineCRLF(in);
         checkSyntax(line);
 
-        String a = null;
+        String url = null;
         String input = null;
 
         int spaceIndex = line.indexOf(" ");
         if (spaceIndex >= 0) {
-            a = line.substring(0, spaceIndex);
+            url = line.substring(0, spaceIndex);
             input = line.substring(spaceIndex + 1);
-        } else {
-            a = line;
+        } 
+        else {
+            url = line;
         }
-        return new Request(a, input);
+        return new Request(url, input);
     } 
     
     private static String readLineCRLF(InputStream in) throws IOException, ProtocolSyntaxException {
         ByteArrayOutputStream buf = new ByteArrayOutputStream();
-        int b = -1;
+        int b;
         boolean CRFound = false;
         while ((b = in.read()) != -1) {
             if (CRFound && b == '\n') {
@@ -52,9 +53,11 @@ public class Request {
                 buf.write(b);
             } 
         }
+
         if (!CRFound) {
             throw new ProtocolSyntaxException("Error: CRLF was not found");
         }
+
         return buf.toString(StandardCharsets.UTF_8);
     }
 
@@ -62,6 +65,7 @@ public class Request {
         if (!line.startsWith("gemini-lite://")) {
             throw new ProtocolSyntaxException("Error: Request does not begin with \"gemini-lite://\"");
         }
+
         if (line.length() > 1024) {
             throw new ProtocolSyntaxException("Error: request too long");
         }
