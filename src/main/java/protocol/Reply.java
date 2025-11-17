@@ -19,18 +19,18 @@ public class Reply {
 
     public static Reply parse(InputStream in) throws ProtocolSyntaxException, IOException {
         String header = readLineCRLF(in);
-        int space = header.indexOf(' ');
-        if (space < 0 || space > 3) {
+        int spaceIndex = header.indexOf(' ');
+        if (spaceIndex < 0 || spaceIndex > 3) {
             throw new ProtocolSyntaxException("Error: reply header must have status space meta");
         } 
         int code;
         try {
-            code = Integer.parseInt(header.substring(0, space));
+            code = Integer.parseInt(header.substring(0, spaceIndex));
         } 
         catch (NumberFormatException e) {
             throw new ProtocolSyntaxException("Error: reply status code not an integer");
         }
-        String meta = header.substring(space + 1);
+        String meta = header.substring(spaceIndex + 1);
 
         byte[] body = null;
         if (code / 10 == 2) {

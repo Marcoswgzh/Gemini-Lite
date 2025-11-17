@@ -48,7 +48,6 @@ public class Request {
             if (b == '\r') {
                 CRFound = true;
             }
-
             if (!CRFound && b != '\n') {
                 buf.write(b);
             } 
@@ -73,7 +72,9 @@ public class Request {
 
     public void format(OutputStream out) throws IOException {
         String line = url;
-        if (input != null) line += " " + input;
+        if (input != null) {
+            line += " " + input;
+        }
         line += "\r\n";
         out.write(line.getBytes(StandardCharsets.UTF_8));
         out.flush();
