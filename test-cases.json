@@ -1,0 +1,98 @@
+[
+    {
+        "type": "client",            
+        "name": <string>,            
+        "url": <string>,             
+        "input": <string or false>,  
+        "transactions": [...],
+        "exitcode": <integer>,       
+        "stdout": <string>,          
+        "justification": <string>    
+    },
+    {
+        "type": "client",            
+        "name": <string>,            
+        "url": <string>,             
+        "input": <string or false>,  
+        "transactions": [...],
+        "exitcode": <integer>,       
+        "stdout": <string>,          
+        "justification": <string>    
+    },
+    {
+        "type": "client",            
+        "name": <string>,            
+        "url": <string>,             
+        "input": <string or false>,  
+        "transactions": [...],
+        "exitcode": <integer>,       
+        "stdout": <string>,          
+        "justification": <string>    
+    },
+    {
+        "type": "client",            
+        "name": <string>,            
+        "url": <string>,             
+        "input": <string or false>,  
+        "transactions": [...],
+        "exitcode": <integer>,       
+        "stdout": <string>,          
+        "justification": <string>    
+    },
+
+    {
+        "type": "server",            
+        "name": <string>,            
+        "documents": { ... },      
+        "request": <string>,         
+        "reply_regex": <string>,     
+        "body": <string>,           
+        "justification": <string>    
+    },
+    {
+        "type": "server",            
+        "name": <string>,            
+        "documents": { ... },      
+        "request": <string>,         
+        "reply_regex": <string>,     
+        "body": <string>,           
+        "justification": <string>    
+    },
+    {
+        "type": "server",            
+        "name": <string>,            
+        "documents": { ... },      
+        "request": <string>,         
+        "reply_regex": <string>,     
+        "body": <string>,           
+        "justification": <string>    
+    },
+    {
+        "type": "server",            
+        "name": <string>,            
+        "documents": { ... },      
+        "request": <string>,         
+        "reply_regex": <string>,     
+        "body": <string>,           
+        "justification": <string>    
+    },
+
+    {
+        "type": "proxy",             
+        "name": <string>,            
+        "request": <string>,         
+        "server_transactions": [...],
+        "reply_regex": <string>,     
+        "body": <string>,           
+        "justification": <string>    
+    },
+    {
+        "type": "proxy",             
+        "name": <string>,            
+        "request": <string>,         
+        "server_transactions": [...],
+        "reply_regex": <string>,     
+        "body": <string>,           
+        "justification": <string>    
+    }
+]
