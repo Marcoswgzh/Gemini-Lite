@@ -79,7 +79,7 @@ public class ProxyEngine {
             }
             visited.add(currentUrl);
 
-            if (redirectsCount > 10) {
+            if (redirectsCount > 5) {
                 return new Reply(43, "Proxy error: too many redirects", null);
             }
 

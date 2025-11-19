@@ -14,12 +14,9 @@ public class ClientEngine {
     public static void run(String url, String inputArg) throws IOException, ProtocolSyntaxException {
         String currentUrl = url;
         String userInput = null;
-        
         boolean inputFromArg = inputArg != null;
-
         boolean haveUserInput = false;
-
-        int redirects = 0;
+        int redirectsCount = 0;
 
         while (true) {
             Request request;
@@ -55,8 +52,8 @@ public class ClientEngine {
                     return;
 
                 case 3: 
-                    redirects++;
-                    if (redirects > 10) {
+                    redirectsCount++;
+                    if (redirectsCount > 5) {
                         System.err.println("Too many redirects");
                         System.exit(1);
                     }
