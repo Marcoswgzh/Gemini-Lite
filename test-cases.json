@@ -1,98 +1,134 @@
 [
     {
         "type": "client",            
-        "name": <string>,            
-        "url": <string>,             
-        "input": <string or false>,  
-        "transactions": [...],
-        "exitcode": <integer>,       
-        "stdout": <string>,          
-        "justification": <string>    
+        "name": "Basic retrieval of plain text",            
+        "url": "gemini-lite://localhost/something",             
+        "input": false,  
+        "transactions": [
+            {
+                "url": "gemini-lite://localhost/something",
+                "reply": "20 text/plain\r\nsomething"
+            }
+        ],
+        "exitcode": 0,       
+        "stdout": "something",          
+        "justification": "Tests that the client correctly retrieves a non-Gemini plain text file"     
     },
     {
         "type": "client",            
-        "name": <string>,            
-        "url": <string>,             
-        "input": <string or false>,  
-        "transactions": [...],
-        "exitcode": <integer>,       
-        "stdout": <string>,          
-        "justification": <string>    
+        "name": "Invalid url",            
+        "url": "invalid_url",             
+        "input": false,  
+        "transactions": [],
+        "exitcode": 1,       
+        "stdout": "Error: Request does not begin with \\\"gemini-lite://\\\"",          
+        "justification": "Tests that the client first checks the input, if it is invalid, it gives an error"    
     },
     {
         "type": "client",            
-        "name": <string>,            
-        "url": <string>,             
-        "input": <string or false>,  
-        "transactions": [...],
-        "exitcode": <integer>,       
-        "stdout": <string>,          
-        "justification": <string>    
+        "name": "Basic input handling",            
+        "url": "gemini-lite://localhost/query",             
+        "input": "something",  
+        "transactions": [
+            {
+                "url": "gemini-lite://localhost/query",
+                "reply": "10 Enter something\r\n"
+            },
+            {
+                "url": "gemini-lite://localhost/query?something",
+                "reply": "20 text/plain\r\nsomething"
+            }
+        ],
+        "exitcode": 0,       
+        "stdout": "something",          
+        "justification": "Tests basic input handling (status 10)"  
     },
     {
         "type": "client",            
-        "name": <string>,            
-        "url": <string>,             
-        "input": <string or false>,  
-        "transactions": [...],
-        "exitcode": <integer>,       
-        "stdout": <string>,          
-        "justification": <string>    
+        "name": "Sensitive input handling",            
+        "url": "gemini-lite://localhost/login",             
+        "input": "password",  
+        "transactions": [
+            {
+                "url": "gemini-lite://localhost/login",
+                "reply": "11  Enter password:\r\n"
+            },
+            {
+                "url": "gemini-lite://localhost/login?password",
+                "reply": "20 text/plain\r\nLogin successful!"
+            }
+        ],
+        "exitcode": 0,       
+        "stdout": "Login successful",          
+        "justification": "Tests client's capability to handle status 11 (sensitive input)"    
     },
 
     {
         "type": "server",            
-        "name": <string>,            
-        "documents": { ... },      
-        "request": <string>,         
-        "reply_regex": <string>,     
-        "body": <string>,           
-        "justification": <string>    
+        "name": "Handle correct service of nested directories",            
+        "documents": {
+            "docs": {
+                "test.gmi": "something"
+            }
+        },      
+        "request": "gemini-lite://localhost/docs/test.gmi\r\n",         
+        "reply_regex": "^20 text/gemini.*$",     
+        "body": "something",           
+        "justification": "Tests that the server can retrieve a file within a subdirectory"    
     },
     {
         "type": "server",            
-        "name": <string>,            
-        "documents": { ... },      
-        "request": <string>,         
-        "reply_regex": <string>,     
-        "body": <string>,           
-        "justification": <string>    
+        "name": "Serve plain text file",            
+        "documents": {
+            "test.txt": "something"
+        },      
+        "request": "gemini-lite://localhost/hello.txt\r\n",         
+        "reply_regex": "^20 text/plain.*$",     
+        "body": "something",           
+        "justification": "Tests that the server correctly serves a non-Gemini plain text file"    
     },
     {
         "type": "server",            
-        "name": <string>,            
-        "documents": { ... },      
-        "request": <string>,         
-        "reply_regex": <string>,     
-        "body": <string>,           
-        "justification": <string>    
+        "name": "File not found",            
+        "documents": {
+            "exists.gmi": "something"
+        },      
+        "request": "gemini-lite://localhost/notexists.gmi\r\n",         
+        "reply_regex": "^51 .*$",     
+        "body": "",           
+        "justification": "Tests server behaviour when a requested file does not exist (status code 51-not found)"    
     },
     {
         "type": "server",            
-        "name": <string>,            
-        "documents": { ... },      
-        "request": <string>,         
-        "reply_regex": <string>,     
-        "body": <string>,           
-        "justification": <string>    
+        "name": "Server unavailable",            
+        "documents": {},      
+        "request": "gemini-lite://localhost/unavailable-service\r\n",         
+        "reply_regex": "^41 .*$",     
+        "body": "",           
+        "justification": "Tests that the server can respond with status 41 when the service is unavailable"
     },
 
     {
         "type": "proxy",             
-        "name": <string>,            
-        "request": <string>,         
-        "server_transactions": [...],
-        "reply_regex": <string>,     
-        "body": <string>,           
-        "justification": <string>    
+        "name": "Proxy request refused",            
+        "request": "gemini-lite://localhost/forbidden\r\n",         
+        "server_transactions": [],
+        "reply_regex": "^53 .*$",     
+        "body": "",           
+        "justification": "Tests that the proxy refuses a request it is configured to refuse it (status 53)"  
     },
     {
         "type": "proxy",             
-        "name": <string>,            
-        "request": <string>,         
-        "server_transactions": [...],
-        "reply_regex": <string>,     
-        "body": <string>,           
-        "justification": <string>    
+        "name": "Proxy error",            
+        "request": "gemini-lite://localhost/error\r\n",          
+        "server_transactions": [
+            {
+                "url": "gemini-lite://localhost/error\r\n",
+                "reply": "43 Proxy error\r\n"
+            }
+        ],
+        "reply_regex": "^43 .*$",     
+        "body": "",           
+        "justification": "Tests that the proxy converts a server failure into a proxy error (status 43) before sending it to the client"   
     }
 ]

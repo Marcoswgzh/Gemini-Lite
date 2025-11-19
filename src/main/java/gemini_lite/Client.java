@@ -15,7 +15,7 @@ public class Client {
         String proxyEnv = System.getenv("GEMINI_LITE_PROXY");
         if (proxyEnv != null && !proxyEnv.isEmpty()) {
             ProxyEngine.parseProxy(proxyEnv);
-            useProxy = true;
+            ProxyEngine.useProxy = true;
         }
 
         String url = args[0];

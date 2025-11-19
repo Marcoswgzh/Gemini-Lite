@@ -8,8 +8,8 @@ import java.nio.file.Path;
 import engines.ServerEngine;
 
 public class Server {
-    private final Path directory;
-    private final int port;
+    private Path directory;
+    private int port;
 
     public Server(Path directory, int port) {
         this.directory = directory;
@@ -47,6 +47,7 @@ public class Server {
             System.exit(1);
         }
     }
+
     public void start() throws IOException {
         try (ServerSocket serverSocket = new ServerSocket(port)) {
             System.err.println("Server started on port " + port + " serving directory " + directory);
@@ -61,6 +62,4 @@ public class Server {
             }
         }
     }
-
-
 }

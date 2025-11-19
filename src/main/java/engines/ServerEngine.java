@@ -15,7 +15,7 @@ import protocol.Reply;
 import protocol.Request;
 
 public class ServerEngine {
-    private static final Map<String, String> mediaTypes = Map.of("gmi", "text/gemini", "txt", "text/plain");
+    private static Map<String, String> mediaTypes = Map.of("gmi", "text/gemini", "txt", "text/plain");
 
     public static void run(Socket client, Path directory) {
         try (Socket sock = client; InputStream i = sock.getInputStream(); OutputStream out = sock.getOutputStream()) {
