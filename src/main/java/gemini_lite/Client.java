@@ -3,12 +3,19 @@ package gemini_lite;
 import java.io.IOException;
 
 import engines.ClientEngine;
+import engines.ProxyEngine;
 
 public class Client {
     public static void main(String[] args) {
         if (args.length < 1 || args.length > 2) {
             System.err.println("Usage: java -cp target/bcs2110-2025.jar gemini_lite.Client <URL> [<input>]");
             System.exit(1);
+        }
+
+        String proxyEnv = System.getenv("GEMINI_LITE_PROXY");
+        if (proxyEnv != null && !proxyEnv.isEmpty()) {
+            ProxyEngine.parseProxy(proxyEnv);
+            useProxy = true;
         }
 
         String url = args[0];

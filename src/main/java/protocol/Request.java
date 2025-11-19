@@ -8,7 +8,7 @@ import java.nio.charset.StandardCharsets;
 
 public class Request {
     public String url;
-    private String input;
+    public String input;
 
     public Request(String url, String input) {
         this.url = url;

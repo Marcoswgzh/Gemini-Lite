@@ -18,6 +18,7 @@ public class ClientEngine {
         boolean inputFromArg = inputArg != null;
 
         boolean haveUserInput = false;
+
         int redirects = 0;
 
         while (true) {
@@ -93,23 +94,32 @@ public class ClientEngine {
             throw new ProtocolSyntaxException("URL must start with gemini-lite://");
         }
 
-        String remainder = urlStr.substring("gemini-lite://".length());
         String host;
-        int port = 1958; 
-        String path = "/";
-        int slashIndex = remainder.indexOf('/');
-        if (slashIndex == -1) {
-            host = remainder;
-        } 
-        else {
-            host = remainder.substring(0, slashIndex);
-            path = remainder.substring(slashIndex); 
+        int port;
+        if (ProxyEngine.useProxy) {
+            host = ProxyEngine.proxyHost;
+            port = ProxyEngine.proxyPort;
         }
+        else {
+            String remainder = urlStr.substring("gemini-lite://".length());
+            String hostPart;
+            int slashIndex = remainder.indexOf('/');
+            if (slashIndex == -1) {
+                hostPart = remainder;
+            } 
+            else {
+                hostPart = remainder.substring(0, slashIndex);
+            }
 
-        int colonIndex = host.indexOf(':');
-        if (colonIndex != -1) {
-            port = Integer.parseInt(host.substring(colonIndex + 1));
-            host = host.substring(0, colonIndex);
+            int colonIndex = hostPart.indexOf(':');
+            if (colonIndex != -1) {
+                host = hostPart.substring(0, colonIndex);
+                port = Integer.parseInt(hostPart.substring(colonIndex + 1));
+            } 
+            else {
+                host = hostPart;
+                port = 1958;
+            }
         }
 
         try (Socket sock = new Socket(host, port)) {
