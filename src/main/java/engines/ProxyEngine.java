@@ -88,10 +88,10 @@ public class ProxyEngine {
                 reply = sendToServer(currentUrl, currentInput);
             } 
             catch (ProtocolSyntaxException e) {
-                return new Reply(43, "Proxy error: origin server protocol error", null);
+                return new Reply(43, "Proxy error: server protocol error", null);
             } 
             catch (IOException e) {
-                return new Reply(43, "Proxy error: unable to connect to origin server", null);
+                return new Reply(43, "Proxy error: unable to connect to server", null);
             } 
             catch (Exception e) {
                 return new Reply(43, "Proxy error: " + e.getMessage(), null);
@@ -117,7 +117,7 @@ public class ProxyEngine {
                     return reply;
 
                 case 6: //x6 for slowdowns
-                    System.err.println("Origin server slow down: " + reply.meta);
+                    System.err.println("Server slow down: " + reply.meta);
                     try {
                         Thread.sleep(1000);
                     } catch (InterruptedException e) {
@@ -126,7 +126,7 @@ public class ProxyEngine {
                     break;
 
                 default:
-                    return new Reply(43, "Proxy error: invalid status code from origin", null);
+                    return new Reply(43, "Proxy error: invalid status code", null);
             }
         }
     }
