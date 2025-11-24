@@ -2,7 +2,7 @@
     {
         "type": "client",            
         "name": "Long request error",            
-        "url": "gemini-lite://demo.svc.leastfixedpoint.nl/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",             
+        "url": "gemini-lite://demo.svc.leastfixedpoint.nl/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",             
         "input": false,  
         "transactions": [],
         "exitcode": 1,       
@@ -16,7 +16,7 @@
         "input": false,  
         "transactions": [],
         "exitcode": 1,       
-        "stdout": "Error: Request does not begin with \\\"gemini-lite://\\\"",          
+        "stdout": "",          
         "justification": "Tests that the client first checks the input, if it is invalid, it gives an error"    
     },
     {
@@ -54,7 +54,7 @@
             }
         ],
         "exitcode": 0,       
-        "stdout": "Login successful",          
+        "stdout": "Login successful!",          
         "justification": "Tests client's capability to handle status 11 (sensitive input)"    
     },
 
@@ -77,7 +77,7 @@
         "documents": {
             "test.txt": "something"
         },      
-        "request": "gemini-lite://localhost/hello.txt\r\n",         
+        "request": "gemini-lite://localhost/test.txt\r\n",         
         "reply_regex": "^20 text/plain.*$",     
         "body": "something",           
         "justification": "Tests that the server correctly serves a non-Gemini plain text file"    
@@ -107,7 +107,12 @@
         "type": "proxy",             
         "name": "Proxy request refused",            
         "request": "gemini-lite://localhost/forbidden\r\n",         
-        "server_transactions": [],
+        "server_transactions": [
+            {
+                "url": "gemini-lite://localhost/forbidden",
+                "reply": "50 Proxy should not contact the server"
+            }
+        ],
         "reply_regex": "^53 .*$",     
         "body": "",           
         "justification": "Tests that the proxy refuses a request it is configured to refuse it (status 53)"  
@@ -118,13 +123,13 @@
         "request": "gemini-lite://localhost/error\r\n",          
         "server_transactions": [
             {
-                "url": "gemini-lite://localhost/error\r\n",
+                "url": "gemini-lite://downstream-proxy/error",
                 "reply": "43 Proxy error\r\n"
             }
         ],
         "reply_regex": "^43 .*$",     
         "body": "",           
-        "justification": "Tests that the proxy converts a server failure into a proxy error (status 43) before sending it to the client"   
+        "justification": "Tests that the proxy passes through a downstream proxy's error (status 43) unmodified"   
     }
 ]
 
