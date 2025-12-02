@@ -31,7 +31,7 @@ public class ServerEngine {
                 return; 
             }
 
-            String url = request.url;
+            String url = request.getUrl();
             String pathStr = extractPathFromUrl(url);
             if (pathStr == null) {
                 sendErrorReply(out, 59, "Malformed request URL");

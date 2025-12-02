@@ -7,9 +7,9 @@ import java.io.OutputStream;
 import java.nio.charset.StandardCharsets;
 
 public class Reply {
-    public int statusCode;
-    public String meta;
-    public byte[] body;
+    private final int statusCode;
+    private final String meta;
+    private final byte[] body;
 
     public Reply(int statusCode, String meta, byte[] body) {
         this.statusCode = statusCode;
@@ -17,59 +17,87 @@ public class Reply {
         this.body = body;
     }
 
-    public static Reply parse(InputStream in) throws ProtocolSyntaxException, IOException {
-        String header = readLineCRLF(in);
-        int spaceIndex = header.indexOf(' ');
-        if (spaceIndex < 0 || spaceIndex > 3) {
-            throw new ProtocolSyntaxException("Error: reply header must have status space meta");
-        } 
-        int code;
-        try {
-            code = Integer.parseInt(header.substring(0, spaceIndex));
-        } 
-        catch (NumberFormatException e) {
-            throw new ProtocolSyntaxException("Error: reply status code not an integer");
-        }
-        String meta = header.substring(spaceIndex + 1);
-
-        byte[] body = null;
-        if (code / 10 == 2) {
-            ByteArrayOutputStream bout = new ByteArrayOutputStream();
-            byte[] buf = new byte[4096];
-            int n;
-            while ((n = in.read(buf)) != -1) {
-               bout.write(buf, 0, n); 
-            } 
-            body = bout.toByteArray();
-        }
-        return new Reply(code, meta, body);
+    public int getStatusCode() {
+        return statusCode;
     }
 
-    private static String readLineCRLF(InputStream in) throws IOException, ProtocolSyntaxException {
+    public String getMeta() {
+        return meta;
+    }
+
+    public byte[] getBody() {
+        return body;
+    }
+
+    public static Reply parse(InputStream in) throws ProtocolSyntaxException, IOException {
+        String line = readLineCRLF(in);
+        checkSyntax(line);
+
+        int space = line.indexOf(' ');
+        int status = Integer.parseInt(line.substring(0, space));
+        String meta = line.substring(space + 1);
+
+        // leer body completo hasta EOF
         ByteArrayOutputStream buf = new ByteArrayOutputStream();
         int b;
-        boolean CRFound = false;
         while ((b = in.read()) != -1) {
-            if (CRFound && b == '\n') {
-                break;
-            }
-            if (b == '\r') {
-                CRFound = true;
-            }
-            if (!CRFound && b != '\n') {
-                buf.write(b);
-            } 
+            buf.write(b);
         }
 
-        if (!CRFound) {
-            throw new ProtocolSyntaxException("Error: CRLF was not found");
+        return new Reply(status, meta, buf.toByteArray());
+    }
+
+    public static String readLineCRLF(InputStream in) throws IOException, ProtocolSyntaxException {
+        ByteArrayOutputStream buf = new ByteArrayOutputStream();
+        int prev = -1;
+
+        while (true) {
+            int b = in.read();
+            if (b == -1) {
+                throw new ProtocolSyntaxException("Unexpected EOF (CRLF not found)");
+            }
+
+            if (prev == '\r' && b == '\n') {
+                break;
+            }
+
+            if (b != '\r') {
+                buf.write(b);
+            }
+
+            prev = b;
         }
 
         return buf.toString(StandardCharsets.UTF_8);
     }
+
+    private static void checkSyntax(String line) throws ProtocolSyntaxException {
+        int spaceIndex = line.indexOf(' ');
+
+        if (line.length() > 1024) {
+            throw new ProtocolSyntaxException("Reply line too long (>1024)");
+        }
+
+        if (spaceIndex == -1) {
+            throw new ProtocolSyntaxException("Missing space between status and meta");
+        }
+
+        String statusStr = line.substring(0, spaceIndex);
+
+        if (statusStr.length() != 2) {
+            throw new ProtocolSyntaxException("Status code must be 2 digits");
+        }
+
+        try {
+            Integer.parseInt(statusStr);
+        } 
+        catch (NumberFormatException e) {
+            throw new ProtocolSyntaxException("Invalid numeric status code");
+        }
+    }
        
     public void format(OutputStream out) throws IOException {
-        String header = String.format("%d %s\r\n", statusCode, meta);
+        String header = statusCode + " " + meta + "\r\n";
         out.write(header.getBytes(StandardCharsets.UTF_8));
         if (body != null) {
             out.write(body);

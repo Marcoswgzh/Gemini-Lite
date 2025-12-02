@@ -7,16 +7,20 @@ import java.io.OutputStream;
 import java.nio.charset.StandardCharsets;
 
 public class Request {
-    public String url;
-    public String input;
+    private final String url;
+    private final String input;
 
     public Request(String url, String input) {
         this.url = url;
         this.input = input;
     }
 
-    public String geturl() {
+    public String getUrl() {
         return url;
+    }
+
+    public String getInput() {
+        return input;
     }
 
     public static Request parse(InputStream in) throws ProtocolSyntaxException, IOException {
@@ -25,8 +29,8 @@ public class Request {
 
         String url = null;
         String input = null;
-
         int spaceIndex = line.indexOf(" ");
+
         if (spaceIndex >= 0) {
             url = line.substring(0, spaceIndex);
             input = line.substring(spaceIndex + 1);
@@ -39,34 +43,35 @@ public class Request {
     
     private static String readLineCRLF(InputStream in) throws IOException, ProtocolSyntaxException {
         ByteArrayOutputStream buf = new ByteArrayOutputStream();
-        int b;
-        boolean CRFound = false;
-        while ((b = in.read()) != -1) {
-            if (CRFound && b == '\n') {
-                break;
-            }
-            if (b == '\r') {
-                CRFound = true;
-            }
-            if (!CRFound && b != '\n') {
-                buf.write(b);
-            } 
-        }
+        int prev = -1;
 
-        if (!CRFound) {
-            throw new ProtocolSyntaxException("Error: CRLF was not found");
+        while (true) {
+            int b = in.read();
+            if (b == -1) {
+                throw new ProtocolSyntaxException("Unexpected EOF (CRLF not found)");
+            }
+
+            if (prev == '\r' && b == '\n') {
+                break; // terminamos la línea
+            }
+
+            if (b != '\r') {
+                buf.write(b);
+            }
+
+            prev = b;
         }
 
         return buf.toString(StandardCharsets.UTF_8);
     }
 
     public static void checkSyntax(String line) throws ProtocolSyntaxException {
-        if (!line.startsWith("gemini-lite://")) {
-            throw new ProtocolSyntaxException("Error: Request does not begin with \"gemini-lite://\"");
-        }
-
         if (line.length() > 1024) {
             throw new ProtocolSyntaxException("Error: request too long");
+        }
+        
+        if (!line.startsWith("gemini-lite://")) {
+            throw new ProtocolSyntaxException("Error: Request does not begin with \"gemini-lite://\"");
         }
     }
 

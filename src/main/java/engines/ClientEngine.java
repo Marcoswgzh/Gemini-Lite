@@ -30,22 +30,23 @@ public class ClientEngine {
 
             Reply reply = sendRequest(request);
 
-            int category = reply.statusCode / 10;
+            int category = reply.getStatusCode() / 10;
 
             switch (category) {
                 case 1: 
                     if (inputFromArg) {
                         userInput = inputArg;
                         haveUserInput = true;
-                    } else if (!haveUserInput) {                       
-                        userInput = promptUser(reply.meta);
+                    } 
+                    else if (!haveUserInput) {                       
+                        userInput = promptUser(reply.getMeta());
                         haveUserInput = true;
                     }
                     break;
 
                 case 2: 
-                    if (reply.body != null) {
-                        System.out.write(reply.body);
+                    if (reply.getBody() != null) {
+                        System.out.write(reply.getBody());
                         System.out.flush();
                     }
                     System.exit(0);
@@ -57,7 +58,7 @@ public class ClientEngine {
                         System.err.println("Too many redirects");
                         System.exit(1);
                     }
-                    currentUrl = reply.meta;
+                    currentUrl = reply.getMeta();
     
                     userInput = null;
                     haveUserInput = false;
@@ -66,12 +67,12 @@ public class ClientEngine {
 
                 case 4: 
                 case 5: 
-                    System.err.println("Error (" + reply.statusCode + "): " + reply.meta);
-                    System.exit(reply.statusCode);
+                    System.err.println("Error (" + reply.getStatusCode() + "): " + reply.getMeta());
+                    System.exit(reply.getStatusCode());
                     return;
 
                 case 6: //x6 for slowdowns
-                    System.err.println("Server asks to slow down: " + reply.meta);
+                    System.err.println("Server asks to slow down: " + reply.getMeta());
                     try {
                         Thread.sleep(1000);
                     } 
@@ -79,14 +80,14 @@ public class ClientEngine {
                     break;
 
                 default:
-                    System.err.println("Unexpected status code: " + reply.statusCode);
+                    System.err.println("Unexpected status code: " + reply.getStatusCode());
                     System.exit(1);
             }
         }
     }
 
     public static Reply sendRequest(Request request) throws ProtocolSyntaxException, IOException {
-        String urlStr = request.url;
+        String urlStr = request.getUrl();
         if (!urlStr.startsWith("gemini-lite://")) {
             throw new ProtocolSyntaxException("Error: Request does not begin with \\\"gemini-lite://\\\"");
         }

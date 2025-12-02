@@ -49,8 +49,8 @@ public class ProxyEngine {
                 return;
             }
 
-            String targetUrl = clientRequest.url;
-            String userInput = clientRequest.input;
+            String targetUrl = clientRequest.getUrl();
+            String userInput = clientRequest.getInput();
 
             Reply finalReply = handleRequest(targetUrl, userInput);
 
@@ -97,7 +97,7 @@ public class ProxyEngine {
                 return new Reply(43, "Proxy error: " + e.getMessage(), null);
             }
 
-            int category = reply.statusCode / 10;
+            int category = reply.getStatusCode() / 10;
 
             switch (category) {
                 case 1: 
@@ -108,7 +108,7 @@ public class ProxyEngine {
 
                 case 3: 
                     redirectsCount++;
-                    currentUrl = reply.meta;
+                    currentUrl = reply.getMeta();
                     currentInput = null; 
                     break;
 
@@ -117,7 +117,7 @@ public class ProxyEngine {
                     return reply;
 
                 case 6: //x6 for slowdowns
-                    System.err.println("Server slow down: " + reply.meta);
+                    System.err.println("Server slow down: " + reply.getMeta());
                     try {
                         Thread.sleep(1000);
                     } catch (InterruptedException e) {
@@ -142,7 +142,13 @@ public class ProxyEngine {
         int port = 1958;
         
         int slashIndex = remainder.indexOf('/');
-        String hostPart = (slashIndex == -1) ? remainder : remainder.substring(0, slashIndex);
+        String hostPart;
+        if (slashIndex == -1) {
+            hostPart = remainder;
+        } 
+        else {
+            hostPart = remainder.substring(0, slashIndex);
+        }
         
         int colonIndex = hostPart.indexOf(':');
         if (colonIndex != -1) {
