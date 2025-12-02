@@ -33,9 +33,16 @@ public class Reply {
         String line = readLineCRLF(in);
         checkSyntax(line);
 
-        int space = line.indexOf(' ');
-        int status = Integer.parseInt(line.substring(0, space));
-        String meta = line.substring(space + 1);
+        int spaceIndex = line.indexOf(' ');
+        int status = Integer.parseInt(line.substring(0, spaceIndex));
+        String meta;
+
+        if (spaceIndex >= 0) {
+            meta = line.substring(spaceIndex + 1).trim();
+        } 
+        else {
+            meta = ""; 
+        }
 
         ByteArrayOutputStream buf = new ByteArrayOutputStream();
         int b;

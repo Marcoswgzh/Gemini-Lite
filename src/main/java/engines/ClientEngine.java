@@ -45,7 +45,7 @@ public class ClientEngine {
                     if (redirectsCount > max_redirects) {
                         throw new IOException("Too many redirects");
                     }
-                    
+
                     if (reply.getMeta().startsWith("/")) {
                         String schemeAndHost = currentUrl.substring(0, currentUrl.indexOf("/", "gemini-lite://".length()));
                         currentUrl = schemeAndHost + reply.getMeta();
@@ -58,12 +58,19 @@ public class ClientEngine {
                     break;
 
                 case 4: // Temporary failure
-                case 5: // Permanent failure
-                    throw new IOException("Server error (" + statusCode + "): " + reply.getMeta());
-
-                case 6: // Slow down
-                    handleSlowdown(reply.getMeta());
+                    if (statusCode == 44) { 
+                        System.err.println("Server asks to slow down: " + reply.getMeta());
+                        handleSlowdown();
+                    } 
+                    else {
+                        System.err.println("Temporary failure (" + statusCode + "): " + reply.getMeta());
+                        System.exit(statusCode);
+                    }
                     break;
+                case 5: // Permanent failure
+                    System.err.println("Server error (" + statusCode + "): " + reply.getMeta());
+                    System.exit(statusCode); 
+                    return;
 
                 default:
                     throw new IOException("Unexpected status code: " + statusCode);
@@ -71,10 +78,9 @@ public class ClientEngine {
         }
     }
 
-    private static void handleSlowdown(String meta) throws IOException {
+    private static void handleSlowdown() throws IOException {
         int retries = 0;
         while (retries < max_slowdown_retries) {
-            System.err.println("Server asks to slow down: " + meta + " (retry " + (retries + 1) + ")");
             try {
                 Thread.sleep(1000 * (retries + 1));
             } catch (InterruptedException e) {
