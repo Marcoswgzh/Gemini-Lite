@@ -8,17 +8,20 @@ import protocol.ProtocolSyntaxException;
 
 public class Client {
     public static void main(String[] args) {
-        System.exit(run(args));
+        System.exit(runClient(args));
     }
 
-    public static int run(String[] args) {
+    private static int runClient(String[] args) {
         try {
             validateArgs(args);
 
             initProxy();
 
             String url = args[0];
-            String input = args.length == 2 ? args[1] : null;
+            String input = null;
+            if (args.length == 2) {
+                input = args[1];
+            }
 
             ClientEngine.runEngine(url, input);
             return 0; 
@@ -39,7 +42,7 @@ public class Client {
             return 1;
         }
     }
-
+    
     private static void validateArgs(String[] args) {
         if (args.length < 1 || args.length > 2) {
             throw new IllegalArgumentException("Usage: java -cp <jar> gemini_lite.Client <URL> [<input>]");

@@ -1,7 +1,6 @@
 package engines;
 
 import java.io.BufferedInputStream;
-import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
@@ -15,13 +14,13 @@ import protocol.Reply;
 import protocol.Request;
 
 public class ServerEngine {
-    private static Map<String, String> mediaTypes = Map.of("gmi", "text/gemini", "txt", "text/plain");
+    private static final Map<String, String> mediaTypes = Map.of("gmi", "text/gemini", "txt", "text/plain");
 
     public static void run(Socket client, Path directory) {
-        try (Socket sock = client; InputStream i = sock.getInputStream(); OutputStream out = sock.getOutputStream()) {
+        try (Socket socket = client; InputStream in = socket.getInputStream(); OutputStream out = socket.getOutputStream()) {
             Request request;
             try {
-                request = Request.parse(i);
+                request = Request.parse(in);
             } 
             catch (ProtocolSyntaxException e) {
                 sendErrorReply(out, 59, "Bad request syntax");
@@ -40,15 +39,22 @@ public class ServerEngine {
 
             Path resolvedPath = directory.resolve("." + pathStr).normalize();
 
-            if (!resolvedPath.startsWith(directory) || !Files.exists(resolvedPath) || Files.isDirectory(resolvedPath) || !Files.isReadable(resolvedPath)) {
+            if (!resolvedPath.startsWith(directory)) {
+                sendErrorReply(out, 59, "Invalid path");
+                return;
+            }
+
+            if (!Files.exists(resolvedPath) || Files.isDirectory(resolvedPath) || !Files.isReadable(resolvedPath)) {
                 sendErrorReply(out, 51, "Not found");
                 return;
             }
 
             String mediaType = determineMediaType(resolvedPath.getFileName().toString());
 
-            try (InputStream j = new BufferedInputStream(Files.newInputStream(resolvedPath))) {
-                sendSuccessReply(out, 20, mediaType, j);
+            try (InputStream fileIn = new BufferedInputStream(Files.newInputStream(resolvedPath))) {
+                byte[] fileData = fileIn.readAllBytes();
+                Reply reply = new Reply( 20, mediaType, fileData);
+                reply.format(out);
             } 
             catch (IOException e) {
                 sendErrorReply(out, 50, "Server error");
@@ -65,22 +71,7 @@ public class ServerEngine {
             new Reply(statusCode, meta, null).format(out);
         } 
         catch (IOException e) {
-            e.printStackTrace();
-        }
-    }
-
-    private static void sendSuccessReply(OutputStream out, int statusCode, String meta, InputStream bodyStream) {
-        try {
-            ByteArrayOutputStream buffer = new ByteArrayOutputStream();
-            byte[] buf = new byte[4096];
-            int n;
-            while ((n = bodyStream.read(buf)) > 0) {
-                buffer.write(buf, 0, n);
-            }
-            new Reply(statusCode, meta, buffer.toByteArray()).format(out);
-        } 
-        catch (IOException e) {
-            e.printStackTrace();
+            System.err.println("Failed to send error reply: " + e.getMessage());
         }
     }
 

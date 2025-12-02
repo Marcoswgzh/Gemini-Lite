@@ -8,8 +8,8 @@ import java.nio.file.Path;
 import engines.ServerEngine;
 
 public class Server {
-    private Path directory;
-    private int port;
+    private final Path directory;
+    private final int port;
 
     public Server(Path directory, int port) {
         this.directory = directory;
@@ -17,15 +17,16 @@ public class Server {
     }
     
     public static void main(String[] args) {
-        if (args.length < 1 || args.length > 2) {
-            System.err.println("Usage: java -cp target/bcs2110-2025.jar gemini_lite.Server <directory> [<port>]");
-            System.exit(1);
-        }
+        System.exit(runServer(args));
+    }
+
+    public static int runServer(String[] args) {
+        validateArgs(args);
 
         Path directory = Path.of(args[0]).toAbsolutePath().normalize();
         if (!directory.toFile().isDirectory()) {
             System.err.println("Specified directory does not exist or is not a directory.");
-            System.exit(1);
+            return 1;
         }
 
         int port = 1958; 
@@ -35,22 +36,16 @@ public class Server {
             } 
             catch (NumberFormatException e) {
                 System.err.println("Invalid port number: " + args[1]);
-                System.exit(1);
+                return 1;
             }
         }
 
-        try {
-            new Server(directory, port).start();
-        } 
-        catch (IOException e) {
-            System.err.println("Failed to start server: " + e.getMessage());
-            System.exit(1);
-        }
+        return startServer(port, directory);
     }
 
-    public void start() throws IOException {
+    public static int startServer(int port, Path directory) {
         try (ServerSocket serverSocket = new ServerSocket(port)) {
-            System.err.println("Server started on port " + port + " serving directory " + directory);
+            System.err.println("Server started on port " + port + ". Serving directory " + directory);
 
             while (true) {
                 try (Socket clientSocket = serverSocket.accept()) {
@@ -60,6 +55,17 @@ public class Server {
                     System.err.println("Client connection error: " + e.getMessage());
                 }
             }
+        }
+        catch (IOException e) {
+            System.err.println("Failed to start server: " + e.getMessage());
+            return 1;
+        }
+    }
+
+    private static void validateArgs(String[] args) {
+        if (args.length < 1 || args.length > 2) {
+            System.err.println("Usage: java -cp target/bcs2110-2025.jar gemini_lite.Server <directory> [<port>]");
+            System.exit(1);
         }
     }
 }
