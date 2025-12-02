@@ -39,6 +39,10 @@ public class ClientEngine {
                     break;
 
                 case 2: // Success
+                    if (reply.getMeta() == null || reply.getMeta().isEmpty()) {
+                        System.err.println("Success reply missing mimetype");
+                        System.exit(1); 
+                    }
                     if (reply.getBody() != null) {
                         System.out.write(reply.getBody());
                         System.out.flush();
