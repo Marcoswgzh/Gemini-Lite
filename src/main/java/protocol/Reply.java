@@ -82,16 +82,17 @@ public class Reply {
         }
 
         String statusStr = line.substring(0, spaceIndex);
-
-        if (statusStr.length() != 2) {
-            throw new ProtocolSyntaxException("Status code must be 2 digits");
-        }
+        int status;
 
         try {
-            Integer.parseInt(statusStr);
+            status = Integer.parseInt(statusStr);
         } 
         catch (NumberFormatException e) {
             throw new ProtocolSyntaxException("Invalid numeric status code");
+        }
+        
+        if (status < 10 || status > 69) {
+            throw new ProtocolSyntaxException("Out of range status code: " + status);
         }
     }
        
