@@ -37,7 +37,6 @@ public class Reply {
         int status = Integer.parseInt(line.substring(0, space));
         String meta = line.substring(space + 1);
 
-        // leer body completo hasta EOF
         ByteArrayOutputStream buf = new ByteArrayOutputStream();
         int b;
         while ((b = in.read()) != -1) {

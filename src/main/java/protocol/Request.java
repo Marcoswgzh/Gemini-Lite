@@ -44,7 +44,7 @@ public class Request {
     private static String readLineCRLF(InputStream in) throws IOException, ProtocolSyntaxException {
         ByteArrayOutputStream buf = new ByteArrayOutputStream();
         int prev = -1;
-
+        
         while (true) {
             int b = in.read();
             if (b == -1) {
@@ -52,7 +52,7 @@ public class Request {
             }
 
             if (prev == '\r' && b == '\n') {
-                break; // terminamos la línea
+                break; 
             }
 
             if (b != '\r') {

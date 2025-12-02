@@ -11,79 +11,74 @@ import protocol.Reply;
 import protocol.Request;
 
 public class ClientEngine {
-    public static void run(String url, String inputArg) throws IOException, ProtocolSyntaxException {
+    private static final int max_redirects = 5;
+    private static final int max_slowdown_retries = 5;
+
+    public static void runEngine(String url, String inputArg) throws IOException, ProtocolSyntaxException {
         String currentUrl = url;
         String userInput = null;
-        boolean inputFromArg = inputArg != null;
-        boolean haveUserInput = false;
         int redirectsCount = 0;
 
-        while (true) {
-            Request request;
-
-            if (inputFromArg) {
-                request = new Request(currentUrl, inputArg);
-            } 
-            else {
-                request = new Request(currentUrl, userInput);
-            }
-
+         while (true) {
+            Request request = new Request(currentUrl, userInput);
             Reply reply = sendRequest(request);
 
-            int category = reply.getStatusCode() / 10;
+            int statusCode = reply.getStatusCode();
+            int category = statusCode / 10;
 
             switch (category) {
-                case 1: 
-                    if (inputFromArg) {
-                        userInput = inputArg;
-                        haveUserInput = true;
-                    } 
-                    else if (!haveUserInput) {                       
+                case 1: // Informational / Input requested
+                    if (userInput == null) {
                         userInput = promptUser(reply.getMeta());
-                        haveUserInput = true;
                     }
                     break;
 
-                case 2: 
+                case 2: // Success
                     if (reply.getBody() != null) {
                         System.out.write(reply.getBody());
                         System.out.flush();
                     }
-                    System.exit(0);
                     return;
 
-                case 3: 
+                case 3: // Redirection
                     redirectsCount++;
-                    if (redirectsCount > 5) {
-                        System.err.println("Too many redirects");
-                        System.exit(1);
+                    if (redirectsCount > max_redirects) {
+                        throw new IOException("Too many redirects");
                     }
                     currentUrl = reply.getMeta();
-    
+                    if (!currentUrl.startsWith("gemini-lite://")) {
+                        throw new ProtocolSyntaxException("Redirect URL invalid: " + currentUrl);
+                    }
                     userInput = null;
-                    haveUserInput = false;
-                    inputFromArg = false;
                     break;
 
-                case 4: 
-                case 5: 
-                    System.err.println("Error (" + reply.getStatusCode() + "): " + reply.getMeta());
-                    System.exit(reply.getStatusCode());
-                    return;
+                case 4: // Temporary failure
+                case 5: // Permanent failure
+                    throw new IOException("Server error (" + statusCode + "): " + reply.getMeta());
 
-                case 6: //x6 for slowdowns
-                    System.err.println("Server asks to slow down: " + reply.getMeta());
-                    try {
-                        Thread.sleep(1000);
-                    } 
-                    catch (InterruptedException e) {}
+                case 6: // Slow down
+                    handleSlowdown(reply.getMeta());
                     break;
 
                 default:
-                    System.err.println("Unexpected status code: " + reply.getStatusCode());
-                    System.exit(1);
+                    throw new IOException("Unexpected status code: " + statusCode);
             }
         }
+    }
+
+    private static void handleSlowdown(String meta) throws IOException {
+        int retries = 0;
+        while (retries < max_slowdown_retries) {
+            System.err.println("Server asks to slow down: " + meta + " (retry " + (retries + 1) + ")");
+            try {
+                Thread.sleep(1000 * (retries + 1));
+            } catch (InterruptedException e) {
+                Thread.currentThread().interrupt();
+                throw new IOException("Interrupted during slowdown wait " + e.getMessage());
+            }
+            retries++;
+        }
+        throw new IOException("Exceeded maximum slowdown retries");
     }
 
     public static Reply sendRequest(Request request) throws ProtocolSyntaxException, IOException {
@@ -112,11 +107,20 @@ public class ClientEngine {
             int colonIndex = hostPart.indexOf(':');
             if (colonIndex != -1) {
                 host = hostPart.substring(0, colonIndex);
-                port = Integer.parseInt(hostPart.substring(colonIndex + 1));
+                try {
+                    port = Integer.parseInt(hostPart.substring(colonIndex + 1));
+                } 
+                catch (NumberFormatException e) {
+                    throw new ProtocolSyntaxException("Invalid port in URL: " + hostPart);
+                }
             } 
             else {
                 host = hostPart;
                 port = 1958;
+            }
+
+            if (host.isBlank()) {
+                throw new ProtocolSyntaxException("Host cannot be empty");
             }
         }
 
@@ -128,11 +132,10 @@ public class ClientEngine {
         }
     }
 
-    private static String promptUser(String prompt) {
+    private static String promptUser(String prompt) throws IOException {
         Console console = System.console();
         if (console == null) {
-            System.err.println("No console available for input.");
-            System.exit(1);
+            throw new IOException("No console available for user input");
         }
         return console.readLine(prompt + " ");
     }
