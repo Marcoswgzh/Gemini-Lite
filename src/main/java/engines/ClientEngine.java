@@ -36,6 +36,12 @@ public class ClientEngine {
                     if (userInput == null) {
                         userInput = promptUser(reply.getMeta());
                     }
+
+                    String encodedInput = userInput.replace(" ", "%20");
+
+                    currentUrl = dropQueryString(currentUrl) + "?" + encodedInput;
+                    
+                    userInput = null; 
                     break;
 
                 case 2: // Success
@@ -54,15 +60,17 @@ public class ClientEngine {
                     if (redirectsCount > max_redirects) {
                         throw new IOException("Too many redirects");
                     }
-
+                    
+                    String newUrl;
                     if (reply.getMeta().startsWith("/")) {
                         String schemeAndHost = currentUrl.substring(0, currentUrl.indexOf("/", "gemini-lite://".length()));
-                        currentUrl = schemeAndHost + reply.getMeta();
+                        newUrl = schemeAndHost + reply.getMeta();
                     }
                     else {
-                        currentUrl = reply.getMeta();
+                        newUrl = reply.getMeta();
                     }
-
+                    
+                    currentUrl = dropQueryString(newUrl);
                     userInput = null;
                     break;
 
@@ -86,7 +94,15 @@ public class ClientEngine {
         }
     }
 
-    private static void handleSlowdown() throws IOException {
+    public static String dropQueryString(String url) {
+        int qIndex = url.indexOf('?');
+        if (qIndex != -1) {
+            return url.substring(0, qIndex);
+        }
+        return url;
+    }
+
+    public static void handleSlowdown() throws IOException {
         int retries = 0;
         while (retries < max_slowdown_retries) {
             try {
@@ -151,7 +167,7 @@ public class ClientEngine {
         }
     }
 
-    private static String promptUser(String prompt) throws IOException {
+    public static String promptUser(String prompt) throws IOException {
         Console console = System.console();
         if (console == null) {
             throw new IOException("No console available for user input");
