@@ -24,6 +24,10 @@ public class ClientEngine {
             Reply reply = sendRequest(request);
 
             int statusCode = reply.getStatusCode();
+            if (statusCode < 10 || statusCode > 59) {
+                break;
+            }
+
             int category = statusCode / 10;
 
             switch (category) {
