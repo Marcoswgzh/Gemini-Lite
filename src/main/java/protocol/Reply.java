@@ -96,12 +96,14 @@ public class Reply {
             statusStr = line;
         }
 
+        int status;
         try {
-            Integer.parseInt(statusStr);
+            status = Integer.parseInt(statusStr);
         } 
         catch (NumberFormatException e) {
             throw new ProtocolSyntaxException("Invalid numeric status code");
         }
+
         String meta;
         if (spaceIndex >= 0) {
             meta = line.substring(spaceIndex + 1);
@@ -109,9 +111,12 @@ public class Reply {
         else {
             meta = "";
         }
-        for (char c : meta.toCharArray()) {
-            if (c < 0x20 || c > 0x7E) {
-                throw new ProtocolSyntaxException("Meta contains invalid character: " + Integer.toHexString(c));
+
+        if ((status >= 20 && status < 30) || (status >= 40 && status < 60)) {
+            for (char c : meta.toCharArray()) {
+                if (c < 0x20 || c > 0x7E) {
+                    throw new ProtocolSyntaxException("Meta contains invalid character: " + Integer.toHexString(c));
+                }
             }
         }
     }
