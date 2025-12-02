@@ -19,7 +19,7 @@ public class ClientEngine {
         String userInput = inputArg;
         int redirectsCount = 0;
 
-         while (true) {
+        while (true) {
             Request request = new Request(currentUrl, userInput);
             Reply reply = sendRequest(request);
 
