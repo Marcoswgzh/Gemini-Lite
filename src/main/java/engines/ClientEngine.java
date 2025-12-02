@@ -16,7 +16,7 @@ public class ClientEngine {
 
     public static void runEngine(String url, String inputArg) throws IOException, ProtocolSyntaxException {
         String currentUrl = url;
-        String userInput = null;
+        String userInput = inputArg;
         int redirectsCount = 0;
 
          while (true) {
@@ -24,7 +24,6 @@ public class ClientEngine {
             Reply reply = sendRequest(request);
 
             int statusCode = reply.getStatusCode();
-
             int category = statusCode / 10;
 
             switch (category) {
@@ -46,10 +45,15 @@ public class ClientEngine {
                     if (redirectsCount > max_redirects) {
                         throw new IOException("Too many redirects");
                     }
-                    currentUrl = reply.getMeta();
-                    if (!currentUrl.startsWith("gemini-lite://")) {
-                        throw new ProtocolSyntaxException("Redirect URL invalid: " + currentUrl);
+                    
+                    if (reply.getMeta().startsWith("/")) {
+                        String schemeAndHost = currentUrl.substring(0, currentUrl.indexOf("/", "gemini-lite://".length()));
+                        currentUrl = schemeAndHost + reply.getMeta();
                     }
+                    else {
+                        currentUrl = reply.getMeta();
+                    }
+
                     userInput = null;
                     break;
 
