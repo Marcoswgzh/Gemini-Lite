@@ -88,13 +88,31 @@ public class Reply {
             throw new ProtocolSyntaxException("Missing space between status and meta");
         }
 
-        String statusStr = line.substring(0, spaceIndex);
+        String statusStr;
+        if (spaceIndex >= 0) {
+            statusStr = line.substring(0, spaceIndex);
+        } 
+        else {
+            statusStr = line;
+        }
 
         try {
             Integer.parseInt(statusStr);
         } 
         catch (NumberFormatException e) {
             throw new ProtocolSyntaxException("Invalid numeric status code");
+        }
+        String meta;
+        if (spaceIndex >= 0) {
+            meta = line.substring(spaceIndex + 1);
+        } 
+        else {
+            meta = "";
+        }
+        for (char c : meta.toCharArray()) {
+            if (c < 0x20 || c > 0x7E) {
+                throw new ProtocolSyntaxException("Meta contains invalid character: " + Integer.toHexString(c));
+            }
         }
     }
        
