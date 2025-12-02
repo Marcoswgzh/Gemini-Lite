@@ -89,17 +89,12 @@ public class Reply {
         }
 
         String statusStr = line.substring(0, spaceIndex);
-        int status;
 
         try {
-            status = Integer.parseInt(statusStr);
+            Integer.parseInt(statusStr);
         } 
         catch (NumberFormatException e) {
             throw new ProtocolSyntaxException("Invalid numeric status code");
-        }
-        
-        if (status < 10 || status > 69) {
-            throw new ProtocolSyntaxException("Out of range status code: " + status);
         }
     }
        

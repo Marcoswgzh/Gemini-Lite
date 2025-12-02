@@ -26,6 +26,11 @@ public class ClientEngine {
             int statusCode = reply.getStatusCode();
             int category = statusCode / 10;
 
+            if (statusCode < 10 || statusCode > 69) {
+                System.err.println("Out of range status code: " + statusCode);
+                System.exit(1); 
+            }
+
             switch (category) {
                 case 1: // Informational / Input requested
                     if (userInput == null) {
