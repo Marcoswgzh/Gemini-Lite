@@ -98,9 +98,9 @@
         "name": "Request contains URL-encoded characters",            
         "documents": {},      
         "request": "gemini-lite://localhost/%48%45%4C%4C%4F\r\n",         
-        "reply_regex": "^59 .*$",     
+        "reply_regex": "^51 .*$",     
         "body": "",           
-        "justification": "Tests that the server can responds with status 59 when the request contains URL-encoded characters"
+        "justification": "Tests that the server can responds with status 51 when the request contains URL-encoded characters"
     },
 
     {
