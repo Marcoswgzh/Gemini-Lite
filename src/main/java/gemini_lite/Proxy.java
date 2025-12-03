@@ -7,7 +7,7 @@ import java.net.Socket;
 import engines.ProxyEngine;
 
 public class Proxy {
-    private int port;
+    private final int port;
 
     public Proxy(int port) {
         this.port = port;
@@ -60,4 +60,3 @@ public class Proxy {
         }
     }
 }
-

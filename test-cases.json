@@ -110,7 +110,7 @@
         "server_transactions": [
             {
                 "url": "gemini-lite://localhost/forbidden",
-                "reply": "50 Proxy should not contact the server"
+                "reply": "50 Proxy should not contact the server\r\n"
             }
         ],
         "reply_regex": "^53 .*$",     
@@ -123,11 +123,11 @@
         "request": "gemini-lite://localhost/error\r\n",          
         "server_transactions": [
             {
-                "url": "gemini-lite://downstream-proxy/error",
-                "reply": "43 Proxy error\r\n"
+                "url": "gemini-lite://localhost/error",
+                "reply": "43 With great power comes great responsibility\r\n"
             }
         ],
-        "reply_regex": "^43 .*$",     
+        "reply_regex": "^43 With great power comes great responsibility$",     
         "body": "",           
         "justification": "Tests that the proxy passes through a downstream proxy's error (status 43) unmodified"   
     }
