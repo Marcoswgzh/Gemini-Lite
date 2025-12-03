@@ -115,7 +115,7 @@
         ],
         "reply_regex": "^50 Proxy should not contact the server$",     
         "body": "",           
-        "justification": "Section Status codes/Permanent failure' of https://geminiprotocol.net/docs/protocol-specification.gmi requires proxy servers to respond with status 53 (Proxy request refused) when refusing a request for a domain not served by the server and when the server does not accept proxy requests."  
+        "justification": "Section Status codes/Permanent failure' of https://geminiprotocol.net/docs/protocol-specification.gmi requires proxy servers to respond with status 53 (Proxy request refused) when the request was for resource at a domain not served by the server and the server does not accept proxy requests."  
     },
     {
         "type": "proxy",             
