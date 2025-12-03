@@ -80,14 +80,23 @@ public class ServerEngine {
         if (schemeEnd == -1) {
             return null;
         }
-        int pathStart = url.indexOf('/', schemeEnd + 3);
+        int authorityStart = schemeEnd + 3;
+        int pathStart = url.indexOf('/', authorityStart);
+
         if (pathStart == -1) {
-            return "/";
+            pathStart = url.length();
         }
+
+        String authority = url.substring(authorityStart, pathStart);
+        if (authority.contains("@")) {
+            return null;
+        }
+
         int queryStart = url.indexOf('?', pathStart);
         if (queryStart == -1) {
             queryStart = url.length();
         }
+        
         return url.substring(pathStart, queryStart);
     }
 
