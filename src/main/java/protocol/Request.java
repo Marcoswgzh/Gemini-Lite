@@ -33,11 +33,12 @@ public class Request {
 
         if (spaceIndex >= 0) {
             url = line.substring(0, spaceIndex);
-            input = line.substring(spaceIndex + 1);
+            input = line.substring(spaceIndex + 1).trim();
         } 
         else {
             url = line;
         }
+        
         return new Request(url, input);
     } 
     
@@ -53,6 +54,10 @@ public class Request {
 
             if (prev == '\r' && b == '\n') {
                 break; 
+            }
+
+            if (b == '\n' && prev != '\r') {
+            throw new ProtocolSyntaxException("Illegal LF without preceding CR");
             }
 
             if (b != '\r') {
@@ -81,6 +86,7 @@ public class Request {
             line += " " + input;
         }
         line += "\r\n";
+
         out.write(line.getBytes(StandardCharsets.UTF_8));
         out.flush();
     }
