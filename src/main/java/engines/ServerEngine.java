@@ -96,7 +96,12 @@ public class ServerEngine {
         if (queryStart == -1) {
             queryStart = url.length();
         }
-        
+
+        int fragmentIndex = url.indexOf('#', pathStart);
+            if (fragmentIndex != -1) {
+                return null; 
+        }
+
         return url.substring(pathStart, queryStart);
     }
 
