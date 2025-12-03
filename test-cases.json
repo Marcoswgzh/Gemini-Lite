@@ -95,12 +95,12 @@
     },
     {
         "type": "server",            
-        "name": "Server unavailable",            
+        "name": "Request contains URL-encoded characters",            
         "documents": {},      
-        "request": "gemini-lite://localhost/unavailable-service\r\n",         
-        "reply_regex": "^41 .*$",     
+        "request": "gemini-lite://localhost/%48%45%4C%4C%4F\r\n",         
+        "reply_regex": "^59 .*$",     
         "body": "",           
-        "justification": "Tests that the server can respond with status 41 when the service is unavailable"
+        "justification": "Tests that the server can responds with status 59 when the request contains URL-encoded characters"
     },
 
     {
