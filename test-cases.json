@@ -7,7 +7,7 @@
         "transactions": [],
         "exitcode": 1,       
         "stdout": "",          
-        "justification": "Gemini protocol specification states that the URI must not exceed 1024 bytes (url provided above exceeds this number)"     
+        "justification": "Section 'Requests' of https://geminiprotocol.net/docs/protocol-specification.gmi requires server rejection of requests exceeding 1024 bytes."     
     },
     {
         "type": "client",            
@@ -17,7 +17,7 @@
         "transactions": [],
         "exitcode": 1,       
         "stdout": "",          
-        "justification": "Tests that the client first checks the input, if it is invalid, it gives an error"    
+        "justification": "Section 'Requests' of https://geminiprotocol.net/docs/protocol-specification.gmi requires that a Gemini request line have the form 'absolute-URI CRLF', where the scheme used in the URI is 'gemini' (gemini-lite for our project). A client given an invalid URL such as invalid_url."    
     },
     {
         "type": "client",            
@@ -36,7 +36,7 @@
         ],
         "exitcode": 0,       
         "stdout": "something",          
-        "justification": "Tests basic input handling (status 10)"  
+        "justification": "Section 'Status codes/Input expected' of https://geminiprotocol.net/docs/protocol-specification.gmi requires servers to respond with status 10 when needing client input via a prompt, so a client must receive the prompt, collect user input, append it URI-encoded as a query, and expect a success status 20 response."  
     },
     {
         "type": "client",            
@@ -55,7 +55,7 @@
         ],
         "exitcode": 0,       
         "stdout": "Login successful!",          
-        "justification": "Tests client's capability to handle status 11 (sensitive input)"    
+        "justification": "Section 'Status codes/Input expected' of https://geminiprotocol.net/docs/protocol-specification.gmi defines status 11 as a request for sensitive input such as passwords."    
     },
 
     {
@@ -69,7 +69,7 @@
         "request": "gemini-lite://localhost/docs/test.gmi\r\n",         
         "reply_regex": "^20 text/gemini.*$",     
         "body": "something",           
-        "justification": "Tests that the server can retrieve a file within a subdirectory"    
+        "justification": "As specified in the project manual, the server must be able to serve nested directories like /tmp/docroot/files/index.gmi."    
     },
     {
         "type": "server",            
@@ -80,7 +80,7 @@
         "request": "gemini-lite://localhost/test.txt\r\n",         
         "reply_regex": "^20 text/plain.*$",     
         "body": "something",           
-        "justification": "Tests that the server correctly serves a non-Gemini plain text file"    
+        "justification": "Section 'Responses' of https://geminiprotocol.net/docs/protocol-specification.gmi requires servers to serve files with their correct MIME type such as text/plain or text/gemini."    
     },
     {
         "type": "server",            
@@ -91,7 +91,7 @@
         "request": "gemini-lite://localhost/notexists.gmi\r\n",         
         "reply_regex": "^51 .*$",     
         "body": "",           
-        "justification": "Tests server behaviour when a requested file does not exist (status code 51-not found)"    
+        "justification": "Section 'Status code/Permanent failure' of the Gemini protocol specification at https://geminiprotocol.net/docs/protocol-specification.gmi requires servers to respond with status 51 (Not Found) when a requested resource does not exist on the server."    
     },
     {
         "type": "server",            
@@ -100,7 +100,7 @@
         "request": "gemini-lite://localhost/%48%45%4C%4C%4F\r\n",         
         "reply_regex": "^51 .*$",     
         "body": "",           
-        "justification": "Tests that the server can responds with status 51 when the request contains URL-encoded characters"
+        "justification": "Section 'Requests' of https://geminiprotocol.net/docs/protocol-specification.gmi states that the request URI must be a valid absolute URL, which includes percent-encoded characters representing characters in the path. In this case, the server responds with status code 51 because the resource does not exist."
     },
 
     {
@@ -115,7 +115,7 @@
         ],
         "reply_regex": "^50 Proxy should not contact the server$",     
         "body": "",           
-        "justification": "Tests that the proxy refuses a request it is configured to refuse it (status 53)"  
+        "justification": "Section Status codes/Permanent failure' of https://geminiprotocol.net/docs/protocol-specification.gmi requires proxy servers to respond with status 53 (Proxy request refused) when refusing a request for a domain not served by the server and when the server does not accept proxy requests."  
     },
     {
         "type": "proxy",             
@@ -129,7 +129,7 @@
         ],
         "reply_regex": "^43 With great power comes great responsibility$",     
         "body": "",           
-        "justification": "Tests that the proxy passes through a downstream proxy's error (status 43) unmodified"   
+        "justification": "Section 'Status codes/Temporary failure' of https://geminiprotocol.net/docs/protocol-specification.gmi requires proxy servers to forward upstream server errors without modification when the server was unable to successfully complete a transaction with the remote host."   
     }
 ]
 
