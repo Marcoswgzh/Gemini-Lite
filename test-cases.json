@@ -17,7 +17,7 @@
         "transactions": [],
         "exitcode": 1,       
         "stdout": "",          
-        "justification": "Section 'Requests' of https://geminiprotocol.net/docs/protocol-specification.gmi requires that a Gemini request line have the form 'absolute-URI CRLF', where the scheme used in the URI is 'gemini' (gemini-lite for our project). A client given an invalid URL such as invalid_url."    
+        "justification": "Section 'Requests' of https://geminiprotocol.net/docs/protocol-specification.gmi requires that a Gemini request line have the form 'absolute-URI CRLF', where the scheme used in the URI is 'gemini' (gemini-lite for our project)."    
     },
     {
         "type": "client",            
