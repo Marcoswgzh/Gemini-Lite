@@ -8,19 +8,11 @@ import java.nio.file.Path;
 import engines.ServerEngine;
 
 public class Server {
-    private final Path directory;
-    private final int port;
-
-    public Server(Path directory, int port) {
-        this.directory = directory;
-        this.port = port;
-    }
-    
     public static void main(String[] args) {
-        System.exit(runServer(args));
+        System.exit(runServerMain(args));
     }
 
-    public static int runServer(String[] args) {
+    public static int runServerMain(String[] args) {
         validateArgs(args);
 
         Path directory = Path.of(args[0]).toAbsolutePath().normalize();
@@ -64,8 +56,7 @@ public class Server {
 
     private static void validateArgs(String[] args) {
         if (args.length < 1 || args.length > 2) {
-            System.err.println("Usage: java -cp target/bcs2110-2025.jar gemini_lite.Server <directory> [<port>]");
-            System.exit(1);
+            throw new IllegalArgumentException("Usage: java -cp target/bcs2110-2025.jar gemini_lite.Server <directory> [<port>]");
         }
     }
 }

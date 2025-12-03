@@ -27,7 +27,7 @@ public class Request {
         String line = readLineCRLF(in);
         checkSyntax(line);
 
-        String url = null;
+        String url;
         String input = null;
         int spaceIndex = line.indexOf(" ");
 

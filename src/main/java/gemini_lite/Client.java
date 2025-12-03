@@ -8,10 +8,10 @@ import protocol.ProtocolSyntaxException;
 
 public class Client {
     public static void main(String[] args) {
-        System.exit(runClient(args));
+        System.exit(runClientMain(args));
     }
 
-    private static int runClient(String[] args) {
+    private static int runClientMain(String[] args) {
         try {
             validateArgs(args);
 
@@ -25,7 +25,6 @@ public class Client {
 
             ClientEngine.runEngine(url, input);
             return 0; 
-
         } 
         catch (IllegalArgumentException e) {
             System.err.println("Argument error: " + e.getMessage());

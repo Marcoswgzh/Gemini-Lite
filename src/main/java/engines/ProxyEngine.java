@@ -19,7 +19,7 @@ public class ProxyEngine {
     public static void parseProxy(String proxyEnv) {
         int colonIndex = proxyEnv.indexOf(':');
         if (colonIndex == -1) {
-            System.err.println("Invalid GEMINI_LITE_PROXY format. Expected hostname:port");
+            System.err.println("Invalid proxy format. Expected hostname:port");
             System.exit(1);
         }
         proxyHost = proxyEnv.substring(0, colonIndex);
@@ -27,12 +27,12 @@ public class ProxyEngine {
             proxyPort = Integer.parseInt(proxyEnv.substring(colonIndex + 1));
         } 
         catch (NumberFormatException e) {
-            System.err.println("Invalid GEMINI_LITE_PROXY port: " + e.getMessage());
+            System.err.println("Invalid proxy port: " + e.getMessage());
             System.exit(1);
         }
     }
 
-    public static void run(Socket clientSocket) {
+    public static void runProxy(Socket clientSocket) {
         try (Socket sock = clientSocket;
             InputStream clientIn = sock.getInputStream();
             OutputStream clientOut = sock.getOutputStream()) {
@@ -120,7 +120,8 @@ public class ProxyEngine {
                     System.err.println("Server slow down: " + reply.getMeta());
                     try {
                         Thread.sleep(1000);
-                    } catch (InterruptedException e) {
+                    } 
+                    catch (InterruptedException e) {
                         e.printStackTrace();
                     }
                     break;
