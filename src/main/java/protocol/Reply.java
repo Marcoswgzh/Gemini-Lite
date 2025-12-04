@@ -34,13 +34,15 @@ public class Reply {
         checkSyntax(line);
 
         int spaceIndex = line.indexOf(' ');
-        int status = Integer.parseInt(line.substring(0, spaceIndex));
+        int status;
         String meta;
 
         if (spaceIndex >= 0) {
+            status = Integer.parseInt(line.substring(0, spaceIndex));
             meta = line.substring(spaceIndex + 1).trim();
         } 
         else {
+            status = Integer.parseInt(line);
             meta = ""; 
         }
 
@@ -101,7 +103,7 @@ public class Reply {
             meta = line.substring(spaceIndex + 1);
         } 
         else {
-            meta = "";
+            meta = "";  
         }
 
         if (meta.getBytes(StandardCharsets.UTF_8).length > 1024) {
