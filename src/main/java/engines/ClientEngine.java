@@ -96,7 +96,7 @@ public class ClientEngine {
 
                 case 5: // Permanent failure
                     System.err.println("Server error (" + statusCode + "): " + reply.getMeta());
-                    throw new IOException("Temporary failure " + statusCode); 
+                    System.exit(statusCode);
 
                 default:
                     throw new IOException("Unexpected status code: " + statusCode);
