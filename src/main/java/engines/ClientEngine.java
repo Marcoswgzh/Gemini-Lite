@@ -16,7 +16,7 @@ public class ClientEngine {
     private static final int max_redirects = 5;
     private static final int max_slowdown_retries = 5;
 
-    public static void runEngine(String url, String inputArg) throws IOException, ProtocolSyntaxException {
+    public static void runEngine(String url, String inputArg, String defaultInput) throws IOException, ProtocolSyntaxException {
         String currentUrl = url;
         String userInput = inputArg;
         int redirectsCount = 0;
@@ -36,7 +36,12 @@ public class ClientEngine {
             switch (category) {
                 case 1: // Informational / Input requested
                     if (userInput == null) {
-                        userInput = promptUser(reply.getMeta());
+                        if (defaultInput != null) {
+                            userInput = defaultInput;
+                        }
+                        else {
+                            userInput = promptUser(reply.getMeta());
+                        }
                     }
 
                     String encodedInput = URLEncoder.encode(userInput, StandardCharsets.UTF_8);
@@ -44,6 +49,7 @@ public class ClientEngine {
                     currentUrl = dropQueryString(currentUrl) + "?" + encodedInput;
                     
                     userInput = null; 
+                    defaultInput = null;
                     break;
 
                 case 2: // Success
@@ -96,7 +102,7 @@ public class ClientEngine {
 
                 case 5: // Permanent failure
                     System.err.println("Server error (" + statusCode + "): " + reply.getMeta());
-                    System.exit(statusCode);
+                    throw new IOException("Temporary failure " + statusCode); 
 
                 default:
                     throw new IOException("Unexpected status code: " + statusCode);
@@ -195,9 +201,11 @@ public class ClientEngine {
 
     public static String promptUser(String prompt) throws IOException {
         Console console = System.console();
-        if (console == null) {
-            throw new IOException("No console available for user input");
+        if (console != null) {
+                return console.readLine(prompt + " ");
+            } 
+        else {
+                throw new IOException("No console available for user input");
         }
-        return console.readLine(prompt + " ");
     }
 }

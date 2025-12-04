@@ -23,7 +23,7 @@ public class Client {
                 input = args[1];
             }
 
-            ClientEngine.runEngine(url, input);
+            ClientEngine.runEngine(url, null, input);
             return 0; 
         } 
         catch (IllegalArgumentException e) {
