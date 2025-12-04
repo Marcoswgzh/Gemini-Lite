@@ -94,7 +94,6 @@ public class Proxy {
 
             while (true) {
                 try (Socket clientSocket = serverSocket.accept()) {
-                    clientSocket.setSoTimeout(10000);
                     ProxyEngine.runProxy(clientSocket);
                 } 
                 catch (IOException e) {

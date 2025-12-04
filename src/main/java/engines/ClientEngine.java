@@ -51,13 +51,13 @@ public class ClientEngine {
             int statusCode = reply.getStatusCode();
             int category = statusCode / 10;
 
-            if (statusCode < 10 || statusCode > 69) {
+            if (statusCode < 10 || statusCode > 59) {
                 System.err.println("Out of range status code: " + statusCode);
                 System.exit(1); 
             }
 
             switch (category) {
-                case 1: // Informational / Input requested
+                case 1: // Input expected
                     if (userInput == null) {
                         if (defaultInput != null) {
                             userInput = defaultInput;
