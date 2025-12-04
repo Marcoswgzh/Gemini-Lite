@@ -1,7 +1,6 @@
 package engines;
 
 import java.io.BufferedInputStream;
-import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
@@ -14,14 +13,35 @@ import protocol.ProtocolSyntaxException;
 import protocol.Reply;
 import protocol.Request;
 
+/**
+ * Core request handler for the Gemini-Lite server
+ * This class is responsible for:
+ * Parsing incoming client requests
+ * Validating and resolving filesystem paths 
+ * Determining media (MIME) types
+ * Serving files from a root directory
+ * Sending appropriate protocol error replies
+ */
 public class ServerEngine {
-    private static Map<String, String> mediaTypes = Map.of("gmi", "text/gemini", "txt", "text/plain");
+    /** Mapping of file extensions to media (MIME) types */
+    private static final Map<String, String> mediaTypes = Map.of("gmi", "text/gemini", "txt", "text/plain");
 
+    /**
+     * Handles client connection
+     * This method:
+     * Parses the incoming Request
+     * Extracts and validates the requested path
+     * Reads and serves the requested file
+     * Sends appropriate error replies on failure
+     * 
+     * @param client: Connected client socket
+     * @param directory: Server root directory used to resolve file paths
+     */
     public static void run(Socket client, Path directory) {
-        try (Socket sock = client; InputStream i = sock.getInputStream(); OutputStream out = sock.getOutputStream()) {
+        try (Socket socket = client; InputStream in = socket.getInputStream(); OutputStream out = socket.getOutputStream()) {
             Request request;
             try {
-                request = Request.parse(i);
+                request = Request.parse(in);
             } 
             catch (ProtocolSyntaxException e) {
                 sendErrorReply(out, 59, "Bad request syntax");
@@ -31,7 +51,7 @@ public class ServerEngine {
                 return; 
             }
 
-            String url = request.url;
+            String url = request.getUrl();
             String pathStr = extractPathFromUrl(url);
             if (pathStr == null) {
                 sendErrorReply(out, 59, "Malformed request URL");
@@ -40,15 +60,22 @@ public class ServerEngine {
 
             Path resolvedPath = directory.resolve("." + pathStr).normalize();
 
-            if (!resolvedPath.startsWith(directory) || !Files.exists(resolvedPath) || Files.isDirectory(resolvedPath) || !Files.isReadable(resolvedPath)) {
+            if (!resolvedPath.startsWith(directory)) {
+                sendErrorReply(out, 59, "Invalid path");
+                return;
+            }
+
+            if (!Files.exists(resolvedPath) || Files.isDirectory(resolvedPath) || !Files.isReadable(resolvedPath)) {
                 sendErrorReply(out, 51, "Not found");
                 return;
             }
 
             String mediaType = determineMediaType(resolvedPath.getFileName().toString());
 
-            try (InputStream j = new BufferedInputStream(Files.newInputStream(resolvedPath))) {
-                sendSuccessReply(out, 20, mediaType, j);
+            try (InputStream fileIn = new BufferedInputStream(Files.newInputStream(resolvedPath))) {
+                byte[] fileData = fileIn.readAllBytes();
+                Reply reply = new Reply( 20, mediaType, fileData);
+                reply.format(out);
             } 
             catch (IOException e) {
                 sendErrorReply(out, 50, "Server error");
@@ -60,46 +87,68 @@ public class ServerEngine {
         }
     }
 
+    /**
+     * Sends error reply to the client
+     *
+     * @param out: Client output stream
+     * @param statusCode: Protocol status code
+     * @param meta: Error message
+     */
     private static void sendErrorReply(OutputStream out, int statusCode, String meta) {
         try {
             new Reply(statusCode, meta, null).format(out);
         } 
         catch (IOException e) {
-            e.printStackTrace();
+            System.err.println("Failed to send error reply: " + e.getMessage());
         }
     }
 
-    private static void sendSuccessReply(OutputStream out, int statusCode, String meta, InputStream bodyStream) {
-        try {
-            ByteArrayOutputStream buffer = new ByteArrayOutputStream();
-            byte[] buf = new byte[4096];
-            int n;
-            while ((n = bodyStream.read(buf)) > 0) {
-                buffer.write(buf, 0, n);
-            }
-            new Reply(statusCode, meta, buffer.toByteArray()).format(out);
-        } 
-        catch (IOException e) {
-            e.printStackTrace();
-        }
-    }
-
+    /**
+     * Extracts the path from a URL
+     * This method enforces that:
+     * A valid :// scheme separator must exist
+     * User info user@host is not allowed
+     * Fragments # are rejected
+     * Query strings ? are stripped
+     * @param url: Request URL
+     * @return the extracted path, or null if the URL is malformed
+     */
     private static String extractPathFromUrl(String url) {
         int schemeEnd = url.indexOf("://");
         if (schemeEnd == -1) {
             return null;
         }
-        int pathStart = url.indexOf('/', schemeEnd + 3);
+        int authorityStart = schemeEnd + 3;
+        int pathStart = url.indexOf('/', authorityStart);
+
         if (pathStart == -1) {
-            return "/";
+            pathStart = url.length();
         }
+
+        String authority = url.substring(authorityStart, pathStart);
+        if (authority.contains("@")) {
+            return null;
+        }
+
         int queryStart = url.indexOf('?', pathStart);
         if (queryStart == -1) {
             queryStart = url.length();
         }
+
+        int fragmentIndex = url.indexOf('#', pathStart);
+            if (fragmentIndex != -1) {
+                return null; 
+        }
+
         return url.substring(pathStart, queryStart);
     }
 
+    /**
+     * Determines the media (MIME) type for a file based on its extension
+     * 
+     * @param fileName: Name of the file
+     * @return the resolved MIME type, or application/octet-stream if unknown
+     */
     private static String determineMediaType(String fileName) {
         int dotIndex = fileName.lastIndexOf('.');
         if (dotIndex == -1) {

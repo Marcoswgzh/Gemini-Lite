@@ -11,15 +11,39 @@ import protocol.ProtocolSyntaxException;
 import protocol.Reply;
 import protocol.Request;
 
+/**
+ * Acts as a proxy server for the Gemini-Lite protocol
+ * This class is responsible for:
+ * Parsing proxy configuration
+ * Accepts client connections
+ * Forwards requests to upstream server
+ * Handles redirects and slowdown responses
+ * Relays final replies back to the client
+ */
 public class ProxyEngine {
+    /** Proxy target host */
     public static String proxyHost;
+
+    /** Proxy target port */
     public static int proxyPort;
+
+    /** Indicates whether proxy mode is enabled */
     public static boolean useProxy = false;
 
+    /** Maximum number of redirects allowed before aborting */
+    private static final int max_redirects = 5;
+
+    /** Maximum number of slowdown retries before aborting */
+    private static final int max_slowdown_retries = 5;
+
+    /**
+     * Parses proxy configuration from an environment variable string
+     * @param proxyEnv: Proxy environment variable
+     */
     public static void parseProxy(String proxyEnv) {
         int colonIndex = proxyEnv.indexOf(':');
         if (colonIndex == -1) {
-            System.err.println("Invalid GEMINI_LITE_PROXY format. Expected hostname:port");
+            System.err.println("Invalid proxy format. Expected hostname:port");
             System.exit(1);
         }
         proxyHost = proxyEnv.substring(0, colonIndex);
@@ -27,12 +51,22 @@ public class ProxyEngine {
             proxyPort = Integer.parseInt(proxyEnv.substring(colonIndex + 1));
         } 
         catch (NumberFormatException e) {
-            System.err.println("Invalid GEMINI_LITE_PROXY port: " + e.getMessage());
+            System.err.println("Invalid proxy port: " + e.getMessage());
             System.exit(1);
         }
     }
 
-    public static void run(Socket clientSocket) {
+    /**
+     * Handles proxy client connection
+     * This method:
+     * Parses the incoming client request
+     * Forwards it to the target server
+     * Processes redirects and retry responses
+     * Sends the final reply back to the client
+     * 
+     * @param clientSocket: Accepted client socket
+     */
+    public static void runProxy(Socket clientSocket) {
         try (Socket sock = clientSocket;
             InputStream clientIn = sock.getInputStream();
             OutputStream clientOut = sock.getOutputStream()) {
@@ -49,8 +83,8 @@ public class ProxyEngine {
                 return;
             }
 
-            String targetUrl = clientRequest.url;
-            String userInput = clientRequest.input;
+            String targetUrl = clientRequest.getUrl();
+            String userInput = clientRequest.getInput();
 
             Reply finalReply = handleRequest(targetUrl, userInput);
 
@@ -67,21 +101,31 @@ public class ProxyEngine {
         }
     }
 
-    private static Reply handleRequest(String url, String userInput) {
+    /**
+     * Handles forwarding logic for a proxied request
+     * This method continuously processes protocol responses until:
+     * A successful response is received
+     * A fatal error occurs
+     * The redirect limit is exceeded
+     * A loop is detected
+     * 
+     * @param url: Initial target URL
+     * @param userInput: optional user input
+     * @return the final Reply to be returned to the client
+     * @throws IOException if a fatal I/O error occurs
+     */
+    private static Reply handleRequest(String url, String userInput) throws IOException {
         Set<String> visited = new HashSet<>();
         int redirectsCount = 0;
         String currentUrl = url;
         String currentInput = userInput;
+        int retries = 0;
 
         while (true) {
             if (visited.contains(currentUrl)) {
                 return new Reply(43, "Proxy error: redirect loop detected", null);
             }
             visited.add(currentUrl);
-
-            if (redirectsCount > 5) {
-                return new Reply(43, "Proxy error: too many redirects", null);
-            }
 
             Reply reply;
             try {
@@ -96,8 +140,8 @@ public class ProxyEngine {
             catch (Exception e) {
                 return new Reply(43, "Proxy error: " + e.getMessage(), null);
             }
-
-            int category = reply.statusCode / 10;
+            int statusCode = reply.getStatusCode();
+            int category = statusCode / 10;
 
             switch (category) {
                 case 1: 
@@ -108,22 +152,27 @@ public class ProxyEngine {
 
                 case 3: 
                     redirectsCount++;
-                    currentUrl = reply.meta;
+                    if (redirectsCount > max_redirects) {
+                        return new Reply(43, "Proxy error: too many redirects", null);
+                    }
+                    currentUrl = reply.getMeta();
                     currentInput = null; 
                     break;
 
                 case 4: 
+                    if (statusCode == 44) {
+                        System.err.println("Server asks to slow down: " + reply.getMeta());
+                        handleSlowdown(retries);
+                        retries++;
+                        continue;
+                    }
+                    else {
+                        System.err.println("Temporary failure (" + statusCode + "): " + reply.getMeta());
+                        System.exit(statusCode);
+                    }
+
                 case 5: 
                     return reply;
-
-                case 6: //x6 for slowdowns
-                    System.err.println("Server slow down: " + reply.meta);
-                    try {
-                        Thread.sleep(1000);
-                    } catch (InterruptedException e) {
-                        e.printStackTrace();
-                    }
-                    break;
 
                 default:
                     return new Reply(43, "Proxy error: invalid status code", null);
@@ -131,6 +180,34 @@ public class ProxyEngine {
         }
     }
 
+    /**
+     * Handles exponential slowdown for origin server responses
+     * 
+     * @param retry: the current retry attempt number
+     * @throws IOException if the maximum retry limit is exceeded
+     */
+    private static void handleSlowdown(int retry) throws IOException {
+        int delay = 1000 * (int)Math.pow(2, retry);
+        try {
+            Thread.sleep(delay);
+        } 
+        catch (InterruptedException e) {
+            if (retry > max_slowdown_retries) {
+                Thread.currentThread().interrupt();
+                throw new IOException("Exceeded maximum slowdown retries");
+            }
+        }
+    }
+
+    /**
+     * Sends a request to the origin server and retrieves the reply
+     * 
+     * @param url: Request URL
+     * @param userInput: Optional user input
+     * @return the parsed Reply
+     * @throws IOException if a network error occurs
+     * @throws ProtocolSyntaxException if the URL format is invalid
+     */
     private static Reply sendToServer(String url, String userInput) throws IOException, ProtocolSyntaxException {
         String urlStr = url;
         if (!urlStr.startsWith("gemini-lite://")) {
@@ -142,7 +219,13 @@ public class ProxyEngine {
         int port = 1958;
         
         int slashIndex = remainder.indexOf('/');
-        String hostPart = (slashIndex == -1) ? remainder : remainder.substring(0, slashIndex);
+        String hostPart;
+        if (slashIndex == -1) {
+            hostPart = remainder;
+        } 
+        else {
+            hostPart = remainder.substring(0, slashIndex);
+        }
         
         int colonIndex = hostPart.indexOf(':');
         if (colonIndex != -1) {
@@ -166,6 +249,12 @@ public class ProxyEngine {
         }
     }
 
+    /**
+     * Sends reply to a client
+     * @param out: Output stream to write to
+     * @param statusCode: Reply status code
+     * @param meta: Reply metadata
+     */
     private static void sendReply(OutputStream out, int statusCode, String meta) {
         try {
             new Reply(statusCode, meta, null).format(out);
