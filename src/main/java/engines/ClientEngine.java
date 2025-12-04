@@ -143,7 +143,6 @@ public class ClientEngine {
             Thread.currentThread().interrupt();
             throw new IOException("Exceeded maximum slowdown retries");
         }
-        
     }
 
     public static Reply sendRequest(Request request) throws ProtocolSyntaxException, IOException {

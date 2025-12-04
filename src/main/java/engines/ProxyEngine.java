@@ -74,6 +74,7 @@ public class ProxyEngine {
         int redirectsCount = 0;
         String currentUrl = url;
         String currentInput = userInput;
+        int retries = 0;
 
         while (true) {
             if (visited.contains(currentUrl)) {
@@ -114,15 +115,17 @@ public class ProxyEngine {
                     break;
 
                 case 4: 
-                    if (reply.getStatusCode() == 44) {
+                    if (statusCode == 44) {
                         System.err.println("Server asks to slow down: " + reply.getMeta());
-                        handleSlowdown(); 
+                        handleSlowdown(retries);
+                        retries++;
+                        continue;
                     }
                     else {
                         System.err.println("Temporary failure (" + statusCode + "): " + reply.getMeta());
                         System.exit(statusCode);
                     }
-                    break;
+
                 case 5: 
                     return reply;
 
@@ -132,20 +135,15 @@ public class ProxyEngine {
         }
     }
 
-    public static void handleSlowdown() throws IOException {
-        int retries = 0;
-        int delay = 1000;
-        while (retries < max_slowdown_retries) {
-            try {
-                Thread.sleep(delay);
-            } catch (InterruptedException e) {
-                Thread.currentThread().interrupt();
-                throw new IOException("Interrupted during slowdown wait " + e.getMessage());
-            }
-            delay *= 2;
-            retries++;
+    public static void handleSlowdown(int retry) throws IOException {
+        int delay = 1000 * (int)Math.pow(2, retry);
+        try {
+            Thread.sleep(delay);
+        } 
+        catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+            throw new IOException("Exceeded maximum slowdown retries");
         }
-        throw new IOException("Exceeded maximum slowdown retries");
     }
 
     private static Reply sendToServer(String url, String userInput) throws IOException, ProtocolSyntaxException {
