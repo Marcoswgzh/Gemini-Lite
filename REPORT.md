@@ -278,12 +278,14 @@ Gemini Lite uses a two-digit response code system categorized into five main cla
 - 3x: Redirects
 - 4x: Temporary failure
 - 5x: Permanent failure
+
 On the other hand, HTTP/1.1 uses a three-digit system across five classes:
 - 1xx: Informational
 - 2xx: Success
 - 3xx: Redirection
 - 4xx: Client error
 - 5xx: Server error
+
 The designer may have decided to depart from this classification scheme to prioritize simplicity and reduce implementation complexity, while, at the same time, being able to maintain its effectiveness
 
 Caching proxies are difficult to implement under the Gemini Lite specification because the protocol lacks important features like cache-control headers, timestamps, or version tags that tell whether a cached copy is still "fresh". Without these, a proxy cannot know if it should serve its stored copy or ask the upstream server for an updated version while the server is still available. Archival mode, which only uses cached copies when the server is offline, is easier to manage, but true caching that improves efficiency requires information not provided by Gemini’s current design. This makes building a fully functional caching proxy challenging.
