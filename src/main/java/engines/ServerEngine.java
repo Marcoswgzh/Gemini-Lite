@@ -13,9 +13,30 @@ import protocol.ProtocolSyntaxException;
 import protocol.Reply;
 import protocol.Request;
 
+/**
+ * Core request handler for the Gemini-Lite server
+ * This class is responsible for:
+ * Parsing incoming client requests
+ * Validating and resolving filesystem paths 
+ * Determining media (MIME) types
+ * Serving files from a root directory
+ * Sending appropriate protocol error replies
+ */
 public class ServerEngine {
+    /** Mapping of file extensions to media (MIME) types */
     private static final Map<String, String> mediaTypes = Map.of("gmi", "text/gemini", "txt", "text/plain");
 
+    /**
+     * Handles client connection
+     * This method:
+     * Parses the incoming Request
+     * Extracts and validates the requested path
+     * Reads and serves the requested file
+     * Sends appropriate error replies on failure
+     * 
+     * @param client: Connected client socket
+     * @param directory: Server root directory used to resolve file paths
+     */
     public static void run(Socket client, Path directory) {
         try (Socket socket = client; InputStream in = socket.getInputStream(); OutputStream out = socket.getOutputStream()) {
             Request request;
@@ -66,6 +87,13 @@ public class ServerEngine {
         }
     }
 
+    /**
+     * Sends error reply to the client
+     *
+     * @param out: Client output stream
+     * @param statusCode: Protocol status code
+     * @param meta: Error message
+     */
     private static void sendErrorReply(OutputStream out, int statusCode, String meta) {
         try {
             new Reply(statusCode, meta, null).format(out);
@@ -75,6 +103,16 @@ public class ServerEngine {
         }
     }
 
+    /**
+     * Extracts the path from a URL
+     * This method enforces that:
+     * A valid :// scheme separator must exist
+     * User info user@host is not allowed
+     * Fragments # are rejected
+     * Query strings ? are stripped
+     * @param url: Request URL
+     * @return the extracted path, or null if the URL is malformed
+     */
     private static String extractPathFromUrl(String url) {
         int schemeEnd = url.indexOf("://");
         if (schemeEnd == -1) {
@@ -105,6 +143,12 @@ public class ServerEngine {
         return url.substring(pathStart, queryStart);
     }
 
+    /**
+     * Determines the media (MIME) type for a file based on its extension
+     * 
+     * @param fileName: Name of the file
+     * @return the resolved MIME type, or application/octet-stream if unknown
+     */
     private static String determineMediaType(String fileName) {
         int dotIndex = fileName.lastIndexOf('.');
         if (dotIndex == -1) {

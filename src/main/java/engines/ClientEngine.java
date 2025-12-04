@@ -12,10 +12,32 @@ import protocol.ProtocolSyntaxException;
 import protocol.Reply;
 import protocol.Request;
 
+/**
+ * Client execution engine for the Gemini-Lite protocol
+ * This class is responsible for:
+ * Sending requests to servers
+ * Handling all protocol status categories
+ */
 public class ClientEngine {
+    /** Maximum number of redirects allowed before aborting */
     private static final int max_redirects = 5;
+
+    /** Maximum number of slowdown retries before aborting */
     private static final int max_slowdown_retries = 5;
 
+    /**
+     * Executes the client engine starting from the given URL
+     * This method continuously processes protocol responses until:
+     * A successful response is received
+     * A fatal error occurs
+     * The redirect limit is exceeded
+     * 
+     * @param url: Initial request URL
+     * @param inputArg: Initial input, or null if none is provided
+     * @param defaultInput: Default input used if user input is required and none is provided
+     * @throws IOException if I/O, or protocol error occurs
+     * @throws ProtocolSyntaxException if request or reply syntax is invalid
+     */
     public static void runEngine(String url, String inputArg, String defaultInput) throws IOException, ProtocolSyntaxException {
         String currentUrl = url;
         String userInput = inputArg;
@@ -112,7 +134,13 @@ public class ClientEngine {
         }
     }
 
-    public static String dropQueryString(String url) {
+    /**
+     * Removes the query string and fragment from a URL
+     * 
+     * @param url: Original URL
+     * @return URL without query parameters or fragment identifiers
+     */
+    private static String dropQueryString(String url) {
         int qIndex = url.indexOf('?');
         int fIndex = url.indexOf('#');
 
@@ -134,18 +162,40 @@ public class ClientEngine {
         return url.substring(0, cut);
     }
 
-    public static void handleSlowdown(int retry) throws IOException {
+    /**
+     * Handles exponential slowdown for server responses
+     * 
+     * @param retry: the current retry attempt number
+     * @throws IOException if the maximum retry limit is exceeded
+     */
+    private static void handleSlowdown(int retry) throws IOException {
         int delay = 1000 * (int)Math.pow(2, retry);
         try {
             Thread.sleep(delay);
         } 
         catch (InterruptedException e) {
-            Thread.currentThread().interrupt();
-            throw new IOException("Exceeded maximum slowdown retries");
+            if (retry > max_slowdown_retries) {
+                Thread.currentThread().interrupt();
+                throw new IOException("Exceeded maximum slowdown retries");
+            }
         }
     }
 
-    public static Reply sendRequest(Request request) throws ProtocolSyntaxException, IOException {
+    /**
+     * Sends a request to the target server
+     * This method:
+     * Extracts host and port from the URL
+     * Supports proxy routing
+     * Opens TCP socket
+     * Sends formatted request
+     * Parses the reply
+     * 
+     * @param request: Request to be sent
+     * @return the parsed Reply
+     * @throws ProtocolSyntaxException if URL or reply syntax is invalid
+     * @throws IOException if a network I/O error occurs
+     */
+    private static Reply sendRequest(Request request) throws ProtocolSyntaxException, IOException {
         String urlStr = dropQueryString(request.getUrl());
         if (!urlStr.startsWith("gemini-lite://")) {
             throw new ProtocolSyntaxException("Error: Request does not begin with \\\"gemini-lite://\\\"");
@@ -196,11 +246,18 @@ public class ClientEngine {
         }
     }
 
-    public static String promptUser(String prompt) throws IOException {
+    /**
+     * Prompts the user for input using the system console
+     * 
+     * @param prompt: Prompt message displayed to the user
+     * @return the user's input
+     * @throws IOException if no console is available
+     */
+    private static String promptUser(String prompt) throws IOException {
         Console console = System.console();
         if (console != null) {
                 return console.readLine(prompt + " ");
-            } 
+        } 
         else {
                 throw new IOException("No console available for user input");
         }
