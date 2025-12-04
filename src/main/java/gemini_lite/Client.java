@@ -73,7 +73,7 @@ public class Client {
      */
     private static void validateArgs(String[] args) {
         if (args.length < 1 || args.length > 2) {
-            throw new IllegalArgumentException("Usage: java -cp <jar> gemini_lite.Client <URL> [<input>]");
+            throw new IllegalArgumentException("Usage: java -cp target/bcs2110-2025.jar gemini_lite.Client <URL> [<input>]");
         }
     }
 
