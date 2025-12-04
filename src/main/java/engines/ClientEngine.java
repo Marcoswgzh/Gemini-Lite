@@ -143,7 +143,7 @@ public class ClientEngine {
     }
 
     public static Reply sendRequest(Request request) throws ProtocolSyntaxException, IOException {
-        String urlStr = request.getUrl();
+        String urlStr = dropQueryString(request.getUrl());
         if (!urlStr.startsWith("gemini-lite://")) {
             throw new ProtocolSyntaxException("Error: Request does not begin with \\\"gemini-lite://\\\"");
         }
