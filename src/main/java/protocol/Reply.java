@@ -80,22 +80,6 @@ public class Reply {
     private static void checkSyntax(String line) throws ProtocolSyntaxException {
         int spaceIndex = line.indexOf(' ');
 
-        String meta;
-        if (spaceIndex >= 0) {
-            meta = line.substring(spaceIndex + 1);
-        } 
-        else {
-            meta = "";
-        }
-
-        if (meta.getBytes(StandardCharsets.UTF_8).length > 1024) {
-            throw new ProtocolSyntaxException("Reply line too long (>1024)");
-        }
-
-        if (spaceIndex == -1) {
-            throw new ProtocolSyntaxException("Missing space between status and meta");
-        }
-
         String statusStr;
         if (spaceIndex >= 0) {
             statusStr = line.substring(0, spaceIndex);
@@ -110,6 +94,18 @@ public class Reply {
         } 
         catch (NumberFormatException e) {
             throw new ProtocolSyntaxException("Invalid numeric status code");
+        }
+
+        String meta;
+        if (spaceIndex >= 0) {
+            meta = line.substring(spaceIndex + 1);
+        } 
+        else {
+            meta = "";
+        }
+
+        if (meta.getBytes(StandardCharsets.UTF_8).length > 1024) {
+            throw new ProtocolSyntaxException("Reply line too long (>1024)");
         }
 
         if ((status >= 20 && status < 30) || (status >= 40 && status < 60)) {
