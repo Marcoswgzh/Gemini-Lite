@@ -110,13 +110,13 @@ public class Reply {
             throw new ProtocolSyntaxException("Reply line too long (>1024)");
         }
 
-        if ((status >= 20 && status < 30) || (status >= 40 && status < 60)) {
+        /*if ((status >= 20 && status < 30) || (status >= 40 && status < 60)) {
             for (char c : meta.toCharArray()) {
                 if (c < 0x20 || c > 0x7E) {
                     throw new ProtocolSyntaxException("Meta contains invalid character: " + Integer.toHexString(c));
                 }
             }
-        }
+        }*/
     }
        
     public void format(OutputStream out) throws IOException {
