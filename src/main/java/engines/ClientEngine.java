@@ -90,13 +90,13 @@ public class ClientEngine {
                     } 
                     else {
                         System.err.println("Temporary failure (" + statusCode + "): " + reply.getMeta());
-                        System.exit(statusCode);
+                        throw new IOException("Temporary failure " + statusCode);
                     }
                     break;
 
                 case 5: // Permanent failure
                     System.err.println("Server error (" + statusCode + "): " + reply.getMeta());
-                    System.exit(statusCode); 
+                    throw new IOException("Temporary failure " + statusCode); 
 
                 default:
                     throw new IOException("Unexpected status code: " + statusCode);
