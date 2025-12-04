@@ -20,6 +20,7 @@ public class ClientEngine {
         String currentUrl = url;
         String userInput = inputArg;
         int redirectsCount = 0;
+        int retries = 0;
 
         while (true) {
             Request request = new Request(currentUrl, userInput);
@@ -92,13 +93,14 @@ public class ClientEngine {
                 case 4: // Temporary failure
                     if (statusCode == 44) { 
                         System.err.println("Server asks to slow down: " + reply.getMeta());
-                        handleSlowdown();
+                        handleSlowdown(retries);
+                        retries++;
+                        continue;
                     } 
                     else {
                         System.err.println("Temporary failure (" + statusCode + "): " + reply.getMeta());
-                        throw new IOException("Temporary failure " + statusCode);
+                        System.exit(statusCode);
                     }
-                    break;
 
                 case 5: // Permanent failure
                     System.err.println("Server error (" + statusCode + "): " + reply.getMeta());
@@ -132,20 +134,16 @@ public class ClientEngine {
         return url.substring(0, cut);
     }
 
-    public static void handleSlowdown() throws IOException {
-        int retries = 0;
-        int delay = 1000;
-        while (retries < max_slowdown_retries) {
-            try {
-                Thread.sleep(delay);
-            } catch (InterruptedException e) {
-                Thread.currentThread().interrupt();
-                throw new IOException("Interrupted during slowdown wait " + e.getMessage());
-            }
-            delay *= 2;
-            retries++;
+    public static void handleSlowdown(int retry) throws IOException {
+        int delay = 1000 * (int)Math.pow(2, retry);
+        try {
+            Thread.sleep(delay);
+        } 
+        catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+            throw new IOException("Exceeded maximum slowdown retries");
         }
-        throw new IOException("Exceeded maximum slowdown retries");
+        
     }
 
     public static Reply sendRequest(Request request) throws ProtocolSyntaxException, IOException {
