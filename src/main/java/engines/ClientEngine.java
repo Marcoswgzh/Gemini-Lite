@@ -5,6 +5,8 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.net.Socket;
+import java.net.URLEncoder;
+import java.nio.charset.StandardCharsets;
 
 import protocol.ProtocolSyntaxException;
 import protocol.Reply;
@@ -37,7 +39,7 @@ public class ClientEngine {
                         userInput = promptUser(reply.getMeta());
                     }
 
-                    String encodedInput = userInput.replace(" ", "%20");
+                    String encodedInput = URLEncoder.encode(userInput, StandardCharsets.UTF_8);
 
                     currentUrl = dropQueryString(currentUrl) + "?" + encodedInput;
                     
@@ -63,8 +65,15 @@ public class ClientEngine {
                     
                     String newUrl;
                     if (reply.getMeta().startsWith("/")) {
-                        String schemeAndHost = currentUrl.substring(0, currentUrl.indexOf("/", "gemini-lite://".length()));
-                        newUrl = schemeAndHost + reply.getMeta();
+                        String base;
+                        int slash = currentUrl.indexOf("/", "gemini-lite://".length());
+                        if (slash == -1) {
+                            base = currentUrl;
+                        } 
+                        else {
+                            base = currentUrl.substring(0, slash);
+                        }
+                        newUrl = base + reply.getMeta();
                     }
                     else {
                         newUrl = reply.getMeta();
@@ -84,6 +93,7 @@ public class ClientEngine {
                         System.exit(statusCode);
                     }
                     break;
+
                 case 5: // Permanent failure
                     System.err.println("Server error (" + statusCode + "): " + reply.getMeta());
                     System.exit(statusCode); 
@@ -96,21 +106,37 @@ public class ClientEngine {
 
     public static String dropQueryString(String url) {
         int qIndex = url.indexOf('?');
-        if (qIndex != -1) {
-            return url.substring(0, qIndex);
+        int fIndex = url.indexOf('#');
+
+        int cut;
+
+        if (qIndex == -1 && fIndex == -1) {
+            return url;
+        } 
+        else if (qIndex == -1) {
+            cut = fIndex;
+        } 
+        else if (fIndex == -1) {
+            cut = qIndex;
+        } 
+        else {
+            cut = Math.min(qIndex, fIndex);
         }
-        return url;
+
+        return url.substring(0, cut);
     }
 
     public static void handleSlowdown() throws IOException {
         int retries = 0;
+        int delay = 1000;
         while (retries < max_slowdown_retries) {
             try {
-                Thread.sleep(1000 * (retries + 1));
+                Thread.sleep(delay);
             } catch (InterruptedException e) {
                 Thread.currentThread().interrupt();
                 throw new IOException("Interrupted during slowdown wait " + e.getMessage());
             }
+            delay *= 2;
             retries++;
         }
         throw new IOException("Exceeded maximum slowdown retries");

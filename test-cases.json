@@ -110,10 +110,10 @@
         "server_transactions": [
             {
                 "url": "gemini-lite://localhost/forbidden",
-                "reply": "50 Proxy should not contact the server\r\n"
+                "reply": "53 Proxy should not contact the server\r\n"
             }
         ],
-        "reply_regex": "^50 Proxy should not contact the server$",     
+        "reply_regex": "^53 Proxy should not contact the server$",     
         "body": "",           
         "justification": "Section Status codes/Permanent failure' of https://geminiprotocol.net/docs/protocol-specification.gmi requires proxy servers to respond with status 53 (Proxy request refused) when the request was for resource at a domain not served by the server and the server does not accept proxy requests."  
     },

@@ -72,11 +72,11 @@ public class Request {
 
     public static void checkSyntax(String line) throws ProtocolSyntaxException {
         if (line.length() > 1024) {
-            throw new ProtocolSyntaxException("Error: request too long");
+            throw new ProtocolSyntaxException("Request line too long (>1024)");
         }
         
         if (!line.startsWith("gemini-lite://")) {
-            throw new ProtocolSyntaxException("Error: Request does not begin with \"gemini-lite://\"");
+            throw new ProtocolSyntaxException("Request does not begin with \"gemini-lite://\"");
         }
     }
 

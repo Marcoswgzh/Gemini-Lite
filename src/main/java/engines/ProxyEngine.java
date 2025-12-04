@@ -15,6 +15,8 @@ public class ProxyEngine {
     public static String proxyHost;
     public static int proxyPort;
     public static boolean useProxy = false;
+    private static final int max_redirects = 5;
+    private static final int max_slowdown_retries = 5;
 
     public static void parseProxy(String proxyEnv) {
         int colonIndex = proxyEnv.indexOf(':');
@@ -67,7 +69,7 @@ public class ProxyEngine {
         }
     }
 
-    private static Reply handleRequest(String url, String userInput) {
+    private static Reply handleRequest(String url, String userInput) throws IOException {
         Set<String> visited = new HashSet<>();
         int redirectsCount = 0;
         String currentUrl = url;
@@ -78,10 +80,6 @@ public class ProxyEngine {
                 return new Reply(43, "Proxy error: redirect loop detected", null);
             }
             visited.add(currentUrl);
-
-            if (redirectsCount > 5) {
-                return new Reply(43, "Proxy error: too many redirects", null);
-            }
 
             Reply reply;
             try {
@@ -96,8 +94,8 @@ public class ProxyEngine {
             catch (Exception e) {
                 return new Reply(43, "Proxy error: " + e.getMessage(), null);
             }
-
-            int category = reply.getStatusCode() / 10;
+            int statusCode = reply.getStatusCode();
+            int category = statusCode / 10;
 
             switch (category) {
                 case 1: 
@@ -108,28 +106,46 @@ public class ProxyEngine {
 
                 case 3: 
                     redirectsCount++;
+                    if (redirectsCount > max_redirects) {
+                        return new Reply(43, "Proxy error: too many redirects", null);
+                    }
                     currentUrl = reply.getMeta();
                     currentInput = null; 
                     break;
 
                 case 4: 
-                case 5: 
-                    return reply;
-
-                case 6: //x6 for slowdowns
-                    System.err.println("Server slow down: " + reply.getMeta());
-                    try {
-                        Thread.sleep(1000);
-                    } 
-                    catch (InterruptedException e) {
-                        e.printStackTrace();
+                    if (reply.getStatusCode() == 44) {
+                        System.err.println("Server asks to slow down: " + reply.getMeta());
+                        handleSlowdown(); 
+                    }
+                    else {
+                        System.err.println("Temporary failure (" + statusCode + "): " + reply.getMeta());
+                        System.exit(statusCode);
                     }
                     break;
+                case 5: 
+                    return reply;
 
                 default:
                     return new Reply(43, "Proxy error: invalid status code", null);
             }
         }
+    }
+
+    public static void handleSlowdown() throws IOException {
+        int retries = 0;
+        int delay = 1000;
+        while (retries < max_slowdown_retries) {
+            try {
+                Thread.sleep(delay);
+            } catch (InterruptedException e) {
+                Thread.currentThread().interrupt();
+                throw new IOException("Interrupted during slowdown wait " + e.getMessage());
+            }
+            delay *= 2;
+            retries++;
+        }
+        throw new IOException("Exceeded maximum slowdown retries");
     }
 
     private static Reply sendToServer(String url, String userInput) throws IOException, ProtocolSyntaxException {
